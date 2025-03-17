@@ -1,0 +1,37 @@
+.card {
+  background: var(--card-background);
+  width: 100%;
+  min-height: 100px;
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.dates {
+  font-size: 0.85rem;
+  color: var(--dates-color);
+  border-radius: 0.25rem;
+  padding-block: 0.25rem;
+}
+
+.dates.dueSoon {
+  background: var(--dates-dueSoon-background);
+}
+
+.dates.overdue {
+  background: var(--dates-overdue-background);
+}
+
+.dates.complete {
+  background: var(--dates-complete-background);
+}
+
+.dates.dueSoon,
+.dates.overdue,
+.dates.complete {
+  color: var(--font-dark);
+  font-weight: 700;
+  padding-inline: 0.25rem;
+}

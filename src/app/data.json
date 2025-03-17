@@ -1,0 +1,83 @@
+[
+    {
+        "id": "backlog",
+        "title": "Backlog",
+        "cards": [
+            {
+                "id": "card-1",
+                "title": "Title 1",
+                "description": "Description 1",
+                "tags": ["tag-1", "tag-2"],
+                "startDate": "2022-01-01",
+                "endDate": "2022-01-02",
+                "comments": [
+                    {
+                        "id": "comment-1",
+                        "text": "Comment 1"
+                    },
+                    {
+                        "id": "comment-2",
+                        "text": "Comment 2"
+                    }
+                ],
+                "checklistItems": [
+                    {
+                        "id": "checklist-item-1",
+                        "text": "Checklist item 1",
+                        "isComplete": true
+                    },
+                    {
+                        "id": "checklist-item-2",
+                        "text": "Checklist item 2",
+                        "isComplete": false
+                    }
+                ]
+            },
+            {
+                "id": "card-2",
+                "title": "Title 2",
+                "description": "Description 2",
+                "tags": ["tag-3", "tag-4"],
+                "startDate": "2022-01-03",
+                "endDate": "2022-01-04",
+                "comments": [
+                    {
+                        "id": "comment-3",
+                        "text": "Comment 3"
+                    },
+                    {
+                        "id": "comment-4",
+                        "text": "Comment 4"
+                    }
+                ],
+                "checklistItems": [
+                    {
+                        "id": "checklist-item-3",
+                        "text": "Checklist item 3",
+                        "isComplete": true
+                    },
+                    {
+                        "id": "checklist-item-4",
+                        "text": "Checklist item 4",
+                        "isComplete": false
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "id": "thisWeek",
+        "title": "This Week",
+        "cards": []
+    },
+    {
+        "id": "doing",
+        "title": "Doing",
+        "cards": []
+    },
+    {
+        "id": "done",
+        "title": "Done",
+        "cards": []
+    }
+]
