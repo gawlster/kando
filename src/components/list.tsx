@@ -1,12 +1,15 @@
+import { type List } from "@/utils/data";
 import Card from "./card";
 import styles from "./list.module.css";
 
-export default function List() {
+export default function List({ data }: { data: List }) {
   return (
     <div className={styles.list}>
-      <h3>List title</h3>
+      <h3>{data.title}</h3>
       <div className={styles.container}>
-        <Card />
+        {data.cards.map((card) => (
+          <Card key={card.id} data={card} />
+        ))}
       </div>
     </div>
   );
