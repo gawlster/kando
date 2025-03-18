@@ -56,3 +56,15 @@
   margin-bottom: 1rem;
   width: 100%;
 }
+
+/* To be used by modal implementations for consistency */
+.buttonContainer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1rem;
+}
+
+.buttonContainer > button {
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+}
