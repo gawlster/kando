@@ -1,4 +1,4 @@
-import List from "@/components/list/list";
+import ListsContainer from "@/components/listsContainer/listsContainer";
 import { getUser } from "@/utils/data";
 import styles from "./page.module.css";
 
@@ -7,11 +7,7 @@ export default async function Home() {
   return (
     <div className={styles.page}>
       <div>Header and other stuff</div>
-      <div className={styles.listsContainer}>
-        {user?.lists.map((list) => (
-          <List key={list.id} data={list} />
-        ))}
-      </div>
+      <ListsContainer user={user} />
     </div>
   );
 }

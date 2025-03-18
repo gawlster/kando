@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     }),
   };
   await updateUser(user.id, newUserData);
-  revalidatePath("/");
+  revalidatePath("/"); // TODO: Not working
 
   return Response.json({ success: true });
 }

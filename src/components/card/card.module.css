@@ -1,6 +1,6 @@
 .card {
   background: var(--card-background);
-  width: 100%;
+  width: var(--card-width);
   min-height: 100px;
   border-radius: 0.5rem;
   padding: 0.5rem;
@@ -9,11 +9,17 @@
   gap: 0.25rem;
   word-wrap: break-word;
   cursor: pointer;
-  transition: box-shadow var(--transition-duration);
+  transition: box-shadow var(--transition-duration),
+    transform var(--transition-duration), opacity var(--transition-duration);
 }
 
 .card:hover {
   box-shadow: 0 0 0.5rem 0.25rem var(--card-hover-shadow);
+}
+
+.beingDragged {
+  transform: scale(1.05);
+  opacity: 0.5;
 }
 
 .dates {
