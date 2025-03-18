@@ -1,45 +1,14 @@
-import fs from "fs/promises";
-import path from "path";
+import { PrismaClient, User } from "@prisma/client";
 
-export type Tag = {
-  id: string;
-  name: string;
-  color: string;
-};
+const prisma = new PrismaClient();
 
-export type Comment = {
-  id: string;
-  text: string;
-};
+export async function getUser() {
+  return await prisma.user.findFirst();
+}
 
-export type ChecklistItem = {
-  id: string;
-  text: string;
-  isCompleted: boolean;
-};
-
-export type Card = {
-  id: string;
-  title: string;
-  description: string;
-  tags: Tag[];
-  startDate: string;
-  endDate: string;
-  comments: Comment[];
-  checklistItems: ChecklistItem[];
-};
-
-export type List = {
-  id: string;
-  title: string;
-  cards: Card[];
-};
-
-type Data = List[];
-
-export async function getData(): Promise<Data> {
-  const filePath = path.join(process.cwd(), "src/data.json");
-  const fileContents = await fs.readFile(filePath, "utf8");
-  const data = JSON.parse(fileContents);
-  return data;
+export async function updateUser(id: string, user: Omit<User, "id">) {
+  return await prisma.user.update({
+    where: { id },
+    data: user,
+  });
 }

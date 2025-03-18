@@ -1,16 +1,26 @@
 :root {
+  --transition-duration: 0.2s;
+
   --font-light: #f5f5f5;
   --font-dark: #222222;
   --root-background: #222222;
 
   --list-background: #333333;
-  --list-min-width: 350px;
+  --list-width: 350px;
 
   --card-background: #444444;
   --dates-color: #cacaca;
   --dates-dueSoon-background: #ffff00;
   --dates-overdue-background: #ff0000;
   --dates-complete-background: #00ff00;
+
+  --button-background: #555555;
+  --button-color: #f5f5f5;
+  --button-hover-background: #666666;
+  --button-hover-color: #f5f5f5;
+
+  --modal-background: #555555;
+  --modal-overlay-background: rgba(0, 0, 0, 0.5);
 }
 
 html,
@@ -59,4 +69,20 @@ h4 {
   font-size: 1rem;
   margin-bottom: 0.25rem;
   font-weight: 500;
+}
+
+button {
+  border: none;
+  outline: none;
+  cursor: pointer;
+  background: var(--button-background);
+  color: var(--button-color);
+  font-weight: 600;
+  transition: background var(--transition-duration),
+    color var(--transition-duration);
+}
+
+button:hover {
+  background: var(--button-hover-background);
+  color: var(--button-hover-color);
 }

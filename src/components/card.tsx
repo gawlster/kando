@@ -1,11 +1,22 @@
-import { type Card } from "@/utils/data";
+"use client";
+
+import { getDateInDays } from "@/utils/date";
+import { type Card } from "@prisma/client";
 import styles from "./card.module.css";
 
-export default function Card({ data }: { data: Card }) {
-  const dueStatus: string = "complete";
-  const isDueSoon = dueStatus === "dueSoon";
-  const isOverdue = dueStatus === "overdue";
-  const isComplete = dueStatus === "complete";
+export default function Card({
+  data,
+  isInDoneList,
+}: {
+  data: Card;
+  isInDoneList: boolean;
+}) {
+  const isComplete = isInDoneList;
+  const isDueSoon = !isInDoneList && new Date(data.endDate) < getDateInDays(2);
+  const isOverdue = !isInDoneList && new Date(data.endDate) < getDateInDays(0);
+
+  const startDate = new Date(data.startDate);
+  const endDate = new Date(data.endDate);
   return (
     <div className={styles.card}>
       <h4>{data.title}</h4>
@@ -15,7 +26,7 @@ export default function Card({ data }: { data: Card }) {
           isOverdue ? styles.overdue : ""
         } ${isComplete ? styles.complete : ""}`}
       >
-        {data.startDate} - {data.endDate}
+        {startDate.toLocaleDateString()} - {endDate.toLocaleDateString()}
       </div>
     </div>
   );
