@@ -9,6 +9,7 @@
   --list-width: 350px;
 
   --card-background: #444444;
+  --card-hover-shadow: #222222;
   --dates-color: #cacaca;
   --dates-dueSoon-background: #ffff00;
   --dates-overdue-background: #ff0000;
@@ -21,6 +22,8 @@
 
   --modal-background: #555555;
   --modal-overlay-background: rgba(0, 0, 0, 0.5);
+
+  --input-background: #444444;
 }
 
 html,
@@ -85,4 +88,13 @@ button {
 button:hover {
   background: var(--button-hover-background);
   color: var(--button-hover-color);
+}
+
+input {
+  background: var(--input-background);
+  color: var(--font-light);
+  border: none;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  margin-bottom: 0.5rem;
 }

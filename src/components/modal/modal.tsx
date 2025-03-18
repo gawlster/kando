@@ -9,11 +9,19 @@ export default function Modal({
   isOpen,
   onClose = () => {},
   title,
+  wide = false,
+  overlayClickClosesModal = true,
+  closeButton = true,
+  onTitleChange,
 }: {
   children: React.ReactNode;
   isOpen: boolean;
   onClose?: () => void;
   title: string;
+  wide?: boolean;
+  overlayClickClosesModal?: boolean;
+  closeButton?: boolean;
+  onTitleChange?: React.ChangeEventHandler;
 }) {
   const [isMounted, setIsMounted] = useState(false);
   const [isHidden, setIsHidden] = useState(!isOpen);
@@ -42,17 +50,31 @@ export default function Modal({
   return createPortal(
     <div
       className={`${styles.overlay} ${isHidden ? styles.hidden : ""}`}
-      onClick={onClose}
+      onClick={overlayClickClosesModal ? onClose : undefined}
     >
       <div
-        className={`${styles.modal} ${isHidden ? styles.hiddenModal : ""}`}
+        className={`${styles.modal} ${isHidden ? styles.hiddenModal : ""} ${
+          wide ? styles.wide : ""
+        }`}
         onClick={handleModalClick}
       >
         <div className={styles.header}>
-          <h2>{title}</h2>
-          <button className={styles.closeButton} onClick={onClose}>
-            X
-          </button>
+          {onTitleChange ? (
+            <input
+              className={styles.editableTitle}
+              type="text"
+              value={title}
+              onChange={onTitleChange}
+              placeholder="Title"
+            />
+          ) : (
+            <h2>{title}</h2>
+          )}
+          {closeButton && (
+            <button className={styles.closeButton} onClick={onClose}>
+              X
+            </button>
+          )}
         </div>
         {children}
       </div>

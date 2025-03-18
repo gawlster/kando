@@ -1,5 +1,5 @@
+import List from "@/components/list/list";
 import { getUser } from "@/utils/data";
-import List from "../components/list";
 import styles from "./page.module.css";
 
 export default async function Home() {

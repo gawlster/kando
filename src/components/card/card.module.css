@@ -8,6 +8,12 @@
   flex-direction: column;
   gap: 0.25rem;
   word-wrap: break-word;
+  cursor: pointer;
+  transition: box-shadow var(--transition-duration);
+}
+
+.card:hover {
+  box-shadow: 0 0 0.5rem 0.25rem var(--card-hover-shadow);
 }
 
 .dates {

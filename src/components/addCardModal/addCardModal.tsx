@@ -1,8 +1,8 @@
 "use client";
 
 import { ComponentProps, useCallback, useState } from "react";
-import styles from "./addCardModal.module.css";
-import Modal from "./modal";
+import InputLabelPair from "../inputLabelPair/inputLabelPair";
+import Modal from "../modal/modal";
 
 type FormInputs = {
   title: string;
@@ -12,7 +12,7 @@ type FormInputs = {
 export default function AddCardModal({
   listToAddTo,
   ...props
-}: Omit<ComponentProps<typeof Modal>, "children" | "title"> & {
+}: Pick<ComponentProps<typeof Modal>, "isOpen" | "onClose"> & {
   listToAddTo: string;
 }) {
   const [submitting, setSubmitting] = useState(false);
@@ -64,24 +64,5 @@ export default function AddCardModal({
         </button>
       </form>
     </Modal>
-  );
-}
-
-function InputLabelPair({
-  id,
-  label,
-  value,
-  onChange,
-}: {
-  id: string;
-  label: string;
-  value: string;
-  onChange: React.ChangeEventHandler<HTMLInputElement>;
-}) {
-  return (
-    <div className={styles.inputLabelPair}>
-      <label htmlFor={id}>{label}</label>
-      <input type="text" name={id} id={id} value={value} onChange={onChange} />
-    </div>
   );
 }
