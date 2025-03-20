@@ -1,14 +1,16 @@
 "use client";
 
+import { useDroppable } from "@dnd-kit/core";
 import { type List } from "@prisma/client";
-import { useCallback, useContext, useState } from "react";
+import { useCallback, useState } from "react";
 import AddCardModal from "../addCardModal/addCardModal";
 import Card from "../card/card";
-import { DragContext } from "../listsContainer/listsContainer";
 import styles from "./list.module.css";
 
 export default function List({ data }: { data: List }) {
-  const { dragData } = useContext(DragContext);
+  const { isOver, setNodeRef } = useDroppable({
+    id: data.id,
+  });
   const [isAddCardModalOpen, setIsAddCardModalOpen] = useState(false);
   const handleAddCardClick = useCallback(() => {
     setIsAddCardModalOpen(true);
@@ -19,7 +21,7 @@ export default function List({ data }: { data: List }) {
 
   return (
     <>
-      <div className={styles.list}>
+      <div className={styles.list} ref={setNodeRef}>
         <div className={styles.header}>
           <h3>{data.title}</h3>
           <button className={styles.addButton} onClick={handleAddCardClick}>
@@ -28,9 +30,6 @@ export default function List({ data }: { data: List }) {
         </div>
         <div className={styles.container}>
           {data.cards.map((card) => {
-            if (card.id === dragData?.card.id) {
-              return null;
-            }
             return (
               <Card
                 key={card.id}

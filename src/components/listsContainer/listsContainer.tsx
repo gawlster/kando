@@ -1,34 +1,17 @@
 "use client";
 
-import { Card, type User } from "@prisma/client";
-import { createContext, useState } from "react";
+import { DndContext } from "@dnd-kit/core";
+import { type User } from "@prisma/client";
+import { useCallback } from "react";
 import styles from "../../app/page.module.css";
-import DraggingCard from "../draggingCard/draggingCard";
 import List from "../list/list";
 
-export type DragData = {
-  card: Card;
-  listId: string;
-  startingPosition: { x: number; y: number };
-} | null;
-
-export const DragContext = createContext<{
-  dragData: DragData;
-  setDragData: (data: DragData) => void;
-}>({
-  dragData: null,
-  setDragData: () => {},
-});
-
 export default function ListsContainer({ user }: { user: User | null }) {
-  const [dragData, setDragData] = useState<DragData>(null);
+  const handleDragEnd = useCallback(() => {
+    console.log("drag end");
+  }, []);
   return (
-    <DragContext.Provider
-      value={{
-        dragData,
-        setDragData,
-      }}
-    >
+    <DndContext onDragEnd={handleDragEnd}>
       {!!user ? (
         <div className={styles.listsContainer}>
           {user?.lists.map((list) => (
@@ -38,7 +21,6 @@ export default function ListsContainer({ user }: { user: User | null }) {
       ) : (
         <List data={{ id: "loading", title: "", cards: [] }} />
       )}
-      <DraggingCard />
-    </DragContext.Provider>
+    </DndContext>
   );
 }
