@@ -6,7 +6,6 @@ import {
   DragOverEvent,
   DragOverlay,
   DragStartEvent,
-  KeyboardSensor,
   PointerSensor,
   UniqueIdentifier,
   useDroppable,
@@ -15,7 +14,6 @@ import {
 } from "@dnd-kit/core";
 import {
   SortableContext,
-  sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
@@ -31,24 +29,26 @@ import {
   ModalHeader,
   useDisclosure,
 } from "@heroui/react";
-import { createContext, useCallback, useContext, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 
 type ActiveTicket = {
   uid: UniqueIdentifier;
   ticket: Ticket;
-  currentHoveringList: string;
+  lastHoveredList: string;
+  lastHoveredIndex: number;
 } | null;
 
 const ActiveTicketContext = createContext<ActiveTicket>(null);
 
 export default function IndexPage() {
   const [activeTicket, setActiveTicket] = useState<ActiveTicket>(null);
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
+  const sensors = useSensors(useSensor(PointerSensor));
   const [data, setData] = useState({
     swimlanes: [
       {
@@ -75,63 +75,86 @@ export default function IndexPage() {
       },
     ],
   });
-  const handleDragStart = useCallback((event: DragStartEvent) => {
-    const swimlane = data.swimlanes.find(
-      (swimlane) =>
-        swimlane.id === event.active.data.current?.sortable?.containerId
-    );
-    if (!swimlane) {
-      return;
-    }
-    const ticket = swimlane.tickets[event.active.data.current?.sortable?.index];
-    setActiveTicket({
-      uid: event.active.id,
-      ticket,
-      currentHoveringList: swimlane.id,
-    });
-  }, []);
-  const handleDragOver = useCallback((event: DragOverEvent) => {
-    if (!activeTicket) {
-      return;
-    }
-    const hoveringList = event.over?.data.current?.sortable?.containerId;
-    if (hoveringList === activeTicket?.currentHoveringList) {
-      return;
-    }
-    console.log("Updating data");
-    setData((prev) => {
-      const newSwimlanes = prev.swimlanes.map((swimlane) => {
-        if (swimlane.id === activeTicket?.currentHoveringList) {
-          return {
-            ...swimlane,
-            tickets: swimlane.tickets.filter(
-              (ticket) => ticket.id !== activeTicket?.ticket.id
-            ),
-          };
-        }
-        if (swimlane.id === hoveringList) {
-          return {
-            ...swimlane,
-            tickets: [...swimlane.tickets, activeTicket?.ticket],
-          };
-        }
-        return swimlane;
+  const handleDragStart = useCallback(
+    (event: DragStartEvent) => {
+      const swimlane = data.swimlanes.find(
+        (swimlane) =>
+          swimlane.id === event.active.data.current?.sortable?.containerId
+      );
+      if (!swimlane) {
+        return;
+      }
+      const ticket =
+        swimlane.tickets[event.active.data.current?.sortable?.index];
+      setActiveTicket({
+        uid: event.active.id,
+        ticket,
+        lastHoveredList: swimlane.id,
+        lastHoveredIndex: event.active.data.current?.sortable?.index,
       });
-      return {
-        ...prev,
-        swimlanes: newSwimlanes as Swimlane[],
-      };
-    });
-    setActiveTicket((prev) => {
-      if (prev) {
+    },
+    [data.swimlanes]
+  );
+  const handleDragOver = useCallback(
+    (event: DragOverEvent) => {
+      if (!activeTicket) {
+        return;
+      }
+      const hoveringList = event.over?.data.current?.sortable?.containerId;
+      const hoveringIndex = event.over?.data.current?.sortable?.index;
+      if (!hoveringList || hoveringList === activeTicket?.lastHoveredList) {
+        if (hoveringIndex !== activeTicket?.lastHoveredIndex) {
+          setActiveTicket((prev) => {
+            if (prev) {
+              return {
+                ...prev,
+                lastHoveredIndex: hoveringIndex,
+              };
+            }
+            return prev;
+          });
+        }
+        return;
+      }
+      setData((prev) => {
+        const newSwimlanes = prev.swimlanes.map((swimlane) => {
+          if (swimlane.id === activeTicket?.lastHoveredList) {
+            return {
+              ...swimlane,
+              tickets: swimlane.tickets.filter(
+                (ticket) => ticket.id !== activeTicket?.ticket.id
+              ),
+            };
+          }
+          if (swimlane.id === hoveringList) {
+            return {
+              ...swimlane,
+              tickets: swimlane.tickets
+                .slice(0, hoveringIndex)
+                .concat(activeTicket?.ticket)
+                .concat(swimlane.tickets.slice(hoveringIndex)),
+            };
+          }
+          return swimlane;
+        });
         return {
           ...prev,
-          currentHoveringList: hoveringList,
+          swimlanes: newSwimlanes as Swimlane[],
         };
-      }
-      return prev;
-    });
-  }, []);
+      });
+      setActiveTicket((prev) => {
+        if (prev) {
+          return {
+            ...prev,
+            lastHoveredList: hoveringList,
+            lastHoveredIndex: hoveringIndex,
+          };
+        }
+        return prev;
+      });
+    },
+    [activeTicket]
+  );
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     if (event.active.id !== event.over?.id) {
       const startingList = event.active.data.current?.sortable?.containerId;
@@ -144,6 +167,9 @@ export default function IndexPage() {
     }
     setActiveTicket(null);
   }, []);
+  useEffect(() => {
+    console.log(activeTicket);
+  }, [activeTicket]);
   return (
     <ActiveTicketContext.Provider value={activeTicket}>
       <DefaultLayout>
@@ -182,7 +208,7 @@ function Swimlane({ details }: { details: Swimlane }) {
       items={details.tickets}
       strategy={verticalListSortingStrategy}
     >
-      <div className="h-full flex flex-col">
+      <div className="h-full flex flex-col w-[272px]">
         <span>{details.title}</span>
         <div
           className="h-full p-2 bg-slate-700 flex flex-col gap-1 rounded-md"
