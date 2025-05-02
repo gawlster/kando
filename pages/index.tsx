@@ -176,11 +176,18 @@ const Ticket = ({ details }: { details: Ticket }) => {
                     <ModalHeader>Move Ticket</ModalHeader>
                     <ModalBody>
                         <Listbox onAction={onMoveAction}>
-                            {data.swimlanes.map((swimlane) => (
-                                <ListboxItem key={swimlane.id}>
-                                    {swimlane.title}
-                                </ListboxItem>
-                            ))}
+                            {data.swimlanes.map((swimlane) => {
+                                for (const ticket of swimlane.tickets) {
+                                    if (ticket.id === details.id) {
+                                        return null;
+                                    }
+                                }
+                                return (
+                                    <ListboxItem key={swimlane.id}>
+                                        {swimlane.title}
+                                    </ListboxItem>
+                                )
+                            })}
                         </Listbox>
                     </ModalBody>
                     <ModalFooter>
@@ -195,17 +202,36 @@ const Ticket = ({ details }: { details: Ticket }) => {
 };
 
 const AddCardTicket = ({ swimlaneId, isEmptySwimlane }: { swimlaneId: string, isEmptySwimlane?: boolean }) => {
+    const { isOpen, onOpen, onClose } = useDisclosure();
     const handlePress = useCallback(() => {
-        console.log("Add card to swimlane", swimlaneId);
+        onOpen();
     }, [swimlaneId]);
     return (
-        <Card
-            className={`w-64 h-16 min-h-16 bg-background/25 text-background font-bold border border-dashed border-background mt-2 ${isEmptySwimlane && "mb-2"}`}
-            isPressable
-            onPress={handlePress}>
-            <CardBody className="justify-center items-center">
-                <span>Add card</span>
-            </CardBody>
-        </Card>
+        <>
+            <Card
+                className={`w-64 h-16 min-h-16 bg-background/25 text-background font-bold border border-dashed border-background mt-2 ${isEmptySwimlane && "mb-2"}`}
+                isPressable
+                onPress={handlePress}>
+                <CardBody className="justify-center items-center">
+                    <span>Add card</span>
+                </CardBody>
+            </Card>
+            <Modal isOpen={isOpen} onClose={onClose}>
+                <ModalContent>
+                    <ModalHeader>Add Ticket</ModalHeader>
+                    <ModalBody>
+                        <div className="flex flex-col gap-2">
+                            <span className="font-semibold">Add Ticket</span>
+                            <span>Card body</span>
+                        </div>
+                    </ModalBody>
+                    <ModalFooter>
+                        <Button variant="ghost" onPress={onClose}>
+                            Close
+                        </Button>
+                    </ModalFooter>
+                </ModalContent>
+            </Modal>
+        </>
     )
 }
