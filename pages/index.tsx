@@ -21,6 +21,12 @@ import {
     useCallback,
     useState,
 } from "react";
+import { createContext, useContext } from "react";
+
+const DataContext = createContext<{
+    data: { swimlanes: Swimlane[] },
+    setData: React.Dispatch<React.SetStateAction<{ swimlanes: Swimlane[] }>>
+}>({ data: { swimlanes: [] }, setData: () => { } });
 
 export default function IndexPage() {
     const [data, setData] = useState({
@@ -51,13 +57,15 @@ export default function IndexPage() {
     });
 
     return (
-        <DefaultLayout>
-            <div className="flex gap-4">
-                {data.swimlanes.map((swimlane) => (
-                    <Swimlane key={swimlane.id} details={swimlane} />
-                ))}
-            </div>
-        </DefaultLayout>
+        <DataContext.Provider value={{ data, setData }}>
+            <DefaultLayout>
+                <div className="flex gap-4">
+                    {data.swimlanes.map((swimlane) => (
+                        <Swimlane key={swimlane.id} details={swimlane} />
+                    ))}
+                </div>
+            </DefaultLayout>
+        </DataContext.Provider>
     )
 }
 
@@ -88,6 +96,7 @@ type Ticket = {
 };
 
 const Ticket = ({ details }: { details: Ticket }) => {
+    const { data, setData } = useContext(DataContext);
     const { isOpen: isDetailsOpen, onOpen: onDetailsOpen, onClose: onDetailsClose } = useDisclosure();
     const { isOpen: isMoveOpen, onOpen: onMoveOpen, onClose: onMoveClose } = useDisclosure();
     const onCardDropdownAction = useCallback((action: Key) => {
@@ -103,7 +112,22 @@ const Ticket = ({ details }: { details: Ticket }) => {
         }
     }, []);
     const onMoveAction = useCallback((action: Key) => {
-        console.log("Move action", action);
+        setData((prevData) => ({
+            ...prevData,
+            swimlanes: data.swimlanes.map((swimlane) => {
+                if (swimlane.id === action) {
+                    return {
+                        ...swimlane,
+                        tickets: [...swimlane.tickets, details],
+                    };
+                }
+                return {
+                    ...swimlane,
+                    tickets: swimlane.tickets.filter((ticket) => ticket.id !== details.id),
+                };
+            })
+        }));
+        onMoveClose();
     }, []);
     return (
         <>
@@ -142,9 +166,11 @@ const Ticket = ({ details }: { details: Ticket }) => {
                     <ModalHeader>Move Ticket</ModalHeader>
                     <ModalBody>
                         <Listbox onAction={onMoveAction}>
-                            <ListboxItem key="backlog">Backlog</ListboxItem>
-                            <ListboxItem key="in-progress">In Progress</ListboxItem>
-                            <ListboxItem key="done">Done</ListboxItem>
+                            {data.swimlanes.map((swimlane) => (
+                                <ListboxItem key={swimlane.id}>
+                                    {swimlane.title}
+                                </ListboxItem>
+                            ))}
                         </Listbox>
                     </ModalBody>
                     <ModalFooter>
