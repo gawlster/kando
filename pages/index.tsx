@@ -2,6 +2,7 @@ import DefaultLayout from "@/layouts/DefaultLayout";
 import {
     Button,
     Card,
+
     CardBody,
     Dropdown,
     DropdownItem,
@@ -110,7 +111,7 @@ const Ticket = ({ details }: { details: Ticket }) => {
             default:
                 break;
         }
-    }, []);
+    }, [onDetailsOpen, onMoveOpen]);
     const onMoveAction = useCallback((action: Key) => {
         setData((prevData) => ({
             ...prevData,
@@ -128,7 +129,8 @@ const Ticket = ({ details }: { details: Ticket }) => {
             })
         }));
         onMoveClose();
-    }, []);
+    }, [data.swimlanes, details, onMoveClose, setData]);
+
     return (
         <>
             <Dropdown>
