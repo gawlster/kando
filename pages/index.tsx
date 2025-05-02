@@ -2,7 +2,6 @@ import DefaultLayout from "@/layouts/DefaultLayout";
 import {
     Button,
     Card,
-
     CardBody,
     Dropdown,
     DropdownItem,
@@ -30,11 +29,12 @@ const DataContext = createContext<{
 }>({ data: { swimlanes: [] }, setData: () => { } });
 
 export default function IndexPage() {
-    const [data, setData] = useState({
+    const [data, setData] = useState<{ swimlanes: Swimlane[] }>({
         swimlanes: [
             {
                 id: "backlog",
                 title: "Backlog",
+                gradientColors: ["#e8f1fb", "#dbeeff"],
                 tickets: [
                     { id: "1", title: "Ticket 1" },
                     { id: "2", title: "Ticket 2" },
@@ -44,6 +44,7 @@ export default function IndexPage() {
             {
                 id: "in-progress",
                 title: "In Progress",
+                gradientColors: ["#f1fff8", "#d9f5e5"],
                 tickets: [
                     { id: "4", title: "Ticket 4" },
                     { id: "5", title: "Ticket 5" },
@@ -52,6 +53,7 @@ export default function IndexPage() {
             {
                 id: "done",
                 title: "Done",
+                gradientColors: ["#f8f4ff", "#e9ddf9"],
                 tickets: [{ id: "6", title: "Ticket 6" }],
             },
         ],
@@ -60,7 +62,7 @@ export default function IndexPage() {
     return (
         <DataContext.Provider value={{ data, setData }}>
             <DefaultLayout>
-                <div className="flex gap-4">
+                <div className="flex gap-4 h-full w-fit">
                     {data.swimlanes.map((swimlane) => (
                         <Swimlane key={swimlane.id} details={swimlane} />
                     ))}
@@ -73,19 +75,25 @@ export default function IndexPage() {
 type Swimlane = {
     id: string;
     title: string;
+    gradientColors: string[];
     tickets: Ticket[];
 };
 
 function Swimlane({ details }: { details: Swimlane }) {
     return (
-        <div className="h-full flex flex-col w-[272px]">
+        <div className="flex flex-col w-[272px]">
             <span>{details.title}</span>
             <div
-                className="h-full p-2 bg-slate-700 flex flex-col gap-1 rounded-md"
+                className="p-2 flex flex-col gap-1 rounded-md overflow-y-auto max-h-full hide-scrollbar"
+                style={{
+                    background: `linear-gradient(135deg, ${details.gradientColors.join(", ")})`,
+                    boxShadow: '0 8px 12px rgba(0, 0, 0, 0.50)',
+                }}
             >
                 {details.tickets.map((ticket) => (
                     <Ticket key={ticket.id} details={ticket} />
                 ))}
+                <AddCardTicket swimlaneId={details.id} isEmptySwimlane={details.tickets.length == 0} />
             </div>
         </div>
     );
@@ -135,8 +143,8 @@ const Ticket = ({ details }: { details: Ticket }) => {
         <>
             <Dropdown>
                 <DropdownTrigger>
-                    <Card className="w-64" isPressable>
-                        <CardBody>
+                    <Card className="w-64 bg-background/70 h-20 min-h-20" isPressable isBlurred style={{ boxShadow: '0 4px 8px rgba(0, 0, 0, 0.45)' }}>
+                        <CardBody className="h-full justify-center">
                             <span className="font-semibold">{details.title}</span>
                             <span>Card body</span>
                         </CardBody>
@@ -185,3 +193,19 @@ const Ticket = ({ details }: { details: Ticket }) => {
         </>
     )
 };
+
+const AddCardTicket = ({ swimlaneId, isEmptySwimlane }: { swimlaneId: string, isEmptySwimlane?: boolean }) => {
+    const handlePress = useCallback(() => {
+        console.log("Add card to swimlane", swimlaneId);
+    }, [swimlaneId]);
+    return (
+        <Card
+            className={`w-64 h-16 min-h-16 bg-background/25 text-background font-bold border border-dashed border-background mt-2 ${isEmptySwimlane && "mb-2"}`}
+            isPressable
+            onPress={handlePress}>
+            <CardBody className="justify-center items-center">
+                <span>Add card</span>
+            </CardBody>
+        </Card>
+    )
+}
