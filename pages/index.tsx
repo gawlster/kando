@@ -15,10 +15,15 @@ import {
     Listbox,
     ListboxItem,
     useDisclosure,
+    Form,
+    Input,
+    DatePicker,
 } from "@heroui/react";
+import { getLocalTimeZone, today, parseDate } from "@internationalized/date";
 import {
     Key,
     useCallback,
+    useRef,
     useState,
 } from "react";
 import { createContext, useContext } from "react";
@@ -93,7 +98,7 @@ function Swimlane({ details }: { details: Swimlane }) {
                 {details.tickets.map((ticket) => (
                     <Ticket key={ticket.id} details={ticket} />
                 ))}
-                <AddCardTicket swimlaneId={details.id} isEmptySwimlane={details.tickets.length == 0} />
+                <AddCardTicket swimlaneId={details.id} swimlaneTitle={details.title} isEmptySwimlane={details.tickets.length == 0} />
             </div>
         </div>
     );
@@ -201,11 +206,27 @@ const Ticket = ({ details }: { details: Ticket }) => {
     )
 };
 
-const AddCardTicket = ({ swimlaneId, isEmptySwimlane }: { swimlaneId: string, isEmptySwimlane?: boolean }) => {
+const AddCardTicket = ({ swimlaneId, swimlaneTitle, isEmptySwimlane }: { swimlaneId: string, swimlaneTitle: string, isEmptySwimlane?: boolean }) => {
+    const formRef = useRef<HTMLFormElement | null>(null);
     const { isOpen, onOpen, onClose } = useDisclosure();
+    const [startDate, setStartDate] = useState(parseDate(today(getLocalTimeZone()).toString()));
+    const [dueDate, setDueDate] = useState(parseDate(today(getLocalTimeZone()).toString()));
     const handlePress = useCallback(() => {
         onOpen();
-    }, [swimlaneId]);
+    }, []);
+    const handleStartDateChange = useCallback((date: any) => {
+        setStartDate(date);
+        if (date > dueDate) {
+            setDueDate(date);
+        }
+    }, [dueDate]);
+    const handleSubmit = useCallback((e: React.FormEvent) => {
+        e.preventDefault();
+        console.log("Submitted")
+        const values = Object.fromEntries(new FormData(formRef.current!));
+        console.log(JSON.stringify(values));
+        onClose();
+    }, [onClose]);
     return (
         <>
             <Card
@@ -218,12 +239,32 @@ const AddCardTicket = ({ swimlaneId, isEmptySwimlane }: { swimlaneId: string, is
             </Card>
             <Modal isOpen={isOpen} onClose={onClose}>
                 <ModalContent>
-                    <ModalHeader>Add Ticket</ModalHeader>
+                    <ModalHeader>Add Ticket to {swimlaneTitle}</ModalHeader>
                     <ModalBody>
-                        <div className="flex flex-col gap-2">
-                            <span className="font-semibold">Add Ticket</span>
-                            <span>Card body</span>
-                        </div>
+                        <Form ref={formRef} onSubmit={handleSubmit}>
+                            <Input
+                                isRequired
+                                errorMessage="This field is required"
+                                label="Title"
+                                labelPlacement="inside"
+                                name="title"
+                            />
+                            <div className="flex gap-2 w-full wrap">
+                                <DatePicker
+                                    value={startDate}
+                                    onChange={handleStartDateChange}
+                                    label="Start Date"
+                                    labelPlacement="inside"
+                                />
+                                <DatePicker
+                                    value={dueDate}
+                                    onChange={setDueDate}
+                                    label="Due Date"
+                                    labelPlacement="inside"
+                                    minValue={startDate}
+                                />
+                            </div>
+                        </Form>
                     </ModalBody>
                     <ModalFooter>
                         <Button variant="ghost" onPress={onClose}>
