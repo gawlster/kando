@@ -15,23 +15,31 @@ import {
     Listbox,
     ListboxItem,
     useDisclosure,
-    Form,
     Input,
     DatePicker,
 } from "@heroui/react";
-import { getLocalTimeZone, today, parseDate } from "@internationalized/date";
+import { getLocalTimeZone, today, parseDate, CalendarDate } from "@internationalized/date";
 import {
     Key,
     useCallback,
-    useRef,
     useState,
 } from "react";
 import { createContext, useContext } from "react";
 
+type AddTicketRequest = {
+    swimlaneId: string;
+    title: string;
+    startDate: CalendarDate;
+    dueDate: CalendarDate;
+}
+
+type AddTicketResponse = void
+
 const DataContext = createContext<{
     data: { swimlanes: Swimlane[] },
     setData: React.Dispatch<React.SetStateAction<{ swimlanes: Swimlane[] }>>
-}>({ data: { swimlanes: [] }, setData: () => { } });
+    addTicket: (data: AddTicketRequest) => AddTicketResponse
+}>({ data: { swimlanes: [] }, setData: () => { }, addTicket: () => null });
 
 export default function IndexPage() {
     const [data, setData] = useState<{ swimlanes: Swimlane[] }>({
@@ -64,8 +72,27 @@ export default function IndexPage() {
         ],
     });
 
+    const addTicket = useCallback((data: AddTicketRequest) => {
+        const newTicket = {
+            id: "6",
+            title: data.title
+        }
+        setData((prevData) => ({
+            ...prevData,
+            swimlanes: prevData.swimlanes.map((swimlane) => {
+                if (swimlane.id === data.swimlaneId) {
+                    return {
+                        ...swimlane,
+                        tickets: [...swimlane.tickets, newTicket],
+                    };
+                }
+                return swimlane
+            })
+        }));
+    }, [])
+
     return (
-        <DataContext.Provider value={{ data, setData }}>
+        <DataContext.Provider value={{ data, setData, addTicket }}>
             <DefaultLayout>
                 <div className="flex gap-4 h-full w-fit">
                     {data.swimlanes.map((swimlane) => (
@@ -98,7 +125,7 @@ function Swimlane({ details }: { details: Swimlane }) {
                 {details.tickets.map((ticket) => (
                     <Ticket key={ticket.id} details={ticket} />
                 ))}
-                <AddCardTicket swimlaneId={details.id} swimlaneTitle={details.title} isEmptySwimlane={details.tickets.length == 0} />
+                <AddCardTicket swimlaneId={details.id} swimlaneTitle={details.title} isEmptySwimlane={details.tickets.length === 0} />
             </div>
         </div>
     );
@@ -207,26 +234,40 @@ const Ticket = ({ details }: { details: Ticket }) => {
 };
 
 const AddCardTicket = ({ swimlaneId, swimlaneTitle, isEmptySwimlane }: { swimlaneId: string, swimlaneTitle: string, isEmptySwimlane?: boolean }) => {
-    const formRef = useRef<HTMLFormElement | null>(null);
+    const { addTicket } = useContext(DataContext);
     const { isOpen, onOpen, onClose } = useDisclosure();
+    const [title, setTitle] = useState("")
     const [startDate, setStartDate] = useState(parseDate(today(getLocalTimeZone()).toString()));
     const [dueDate, setDueDate] = useState(parseDate(today(getLocalTimeZone()).toString()));
     const handlePress = useCallback(() => {
         onOpen();
-    }, []);
-    const handleStartDateChange = useCallback((date: any) => {
+    }, [onOpen]);
+    const handleStartDateChange = useCallback((date: CalendarDate) => {
         setStartDate(date);
         if (date > dueDate) {
             setDueDate(date);
         }
     }, [dueDate]);
-    const handleSubmit = useCallback((e: React.FormEvent) => {
-        e.preventDefault();
-        console.log("Submitted")
-        const values = Object.fromEntries(new FormData(formRef.current!));
-        console.log(JSON.stringify(values));
+    const handleSubmit = useCallback(() => {
+        const values: AddTicketRequest = {
+            swimlaneId,
+            title,
+            startDate,
+            dueDate
+        }
+        addTicket(values)
+        setTitle("")
+        const todayDate = parseDate(today(getLocalTimeZone()).toString())
+        setStartDate(todayDate)
+        setDueDate(todayDate)
         onClose();
-    }, [onClose]);
+    }, [onClose, title, startDate, dueDate, addTicket, swimlaneId]);
+    const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+        if (e.key === "Enter") {
+            e.preventDefault()
+            handleSubmit()
+        }
+    }, [handleSubmit])
     return (
         <>
             <Card
@@ -237,38 +278,39 @@ const AddCardTicket = ({ swimlaneId, swimlaneTitle, isEmptySwimlane }: { swimlan
                     <span>Add card</span>
                 </CardBody>
             </Card>
-            <Modal isOpen={isOpen} onClose={onClose}>
+            <Modal isOpen={isOpen} onClose={onClose} onKeyDown={handleKeyDown}>
                 <ModalContent>
                     <ModalHeader>Add Ticket to {swimlaneTitle}</ModalHeader>
                     <ModalBody>
-                        <Form ref={formRef} onSubmit={handleSubmit}>
-                            <Input
-                                isRequired
-                                errorMessage="This field is required"
-                                label="Title"
+                        <Input
+                            label="Title"
+                            labelPlacement="inside"
+                            name="title"
+                            value={title}
+                            onValueChange={setTitle}
+                        />
+                        <div className="flex gap-2 w-full wrap">
+                            <DatePicker
+                                value={startDate}
+                                onChange={handleStartDateChange}
+                                label="Start Date"
                                 labelPlacement="inside"
-                                name="title"
                             />
-                            <div className="flex gap-2 w-full wrap">
-                                <DatePicker
-                                    value={startDate}
-                                    onChange={handleStartDateChange}
-                                    label="Start Date"
-                                    labelPlacement="inside"
-                                />
-                                <DatePicker
-                                    value={dueDate}
-                                    onChange={setDueDate}
-                                    label="Due Date"
-                                    labelPlacement="inside"
-                                    minValue={startDate}
-                                />
-                            </div>
-                        </Form>
+                            <DatePicker
+                                value={dueDate}
+                                onChange={setDueDate}
+                                label="Due Date"
+                                labelPlacement="inside"
+                                minValue={startDate}
+                            />
+                        </div>
                     </ModalBody>
                     <ModalFooter>
                         <Button variant="ghost" onPress={onClose}>
                             Close
+                        </Button>
+                        <Button variant="solid" onPress={() => handleSubmit()}>
+                            Submit
                         </Button>
                     </ModalFooter>
                 </ModalContent>
