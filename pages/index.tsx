@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from "uuid"
 import DefaultLayout from "@/layouts/DefaultLayout";
 import {
     Button,
@@ -18,7 +19,7 @@ import {
     Input,
     DatePicker,
 } from "@heroui/react";
-import { getLocalTimeZone, today, parseDate, CalendarDate } from "@internationalized/date";
+import { getLocalTimeZone, today, parseDate, CalendarDate, Calendar } from "@internationalized/date";
 import {
     Key,
     useCallback,
@@ -35,11 +36,22 @@ type AddTicketRequest = {
 
 type AddTicketResponse = void
 
+type MoveTicketRequest = {
+    destinationSwimlaneId: string;
+    ticket: Ticket
+}
+
+type MoveTicketResponse = void;
+
 const DataContext = createContext<{
     data: { swimlanes: Swimlane[] },
-    setData: React.Dispatch<React.SetStateAction<{ swimlanes: Swimlane[] }>>
     addTicket: (data: AddTicketRequest) => AddTicketResponse
-}>({ data: { swimlanes: [] }, setData: () => { }, addTicket: () => null });
+    moveTicket: (data: MoveTicketRequest) => MoveTicketResponse
+}>({
+    data: { swimlanes: [] },
+    addTicket: () => null,
+    moveTicket: () => null
+});
 
 export default function IndexPage() {
     const [data, setData] = useState<{ swimlanes: Swimlane[] }>({
@@ -74,7 +86,7 @@ export default function IndexPage() {
 
     const addTicket = useCallback((data: AddTicketRequest) => {
         const newTicket = {
-            id: "6",
+            id: uuidv4(),
             title: data.title
         }
         setData((prevData) => ({
@@ -91,8 +103,26 @@ export default function IndexPage() {
         }));
     }, [])
 
+    const moveTicket = useCallback((data: MoveTicketRequest) => {
+        setData((prevData) => ({
+            ...prevData,
+            swimlanes: prevData.swimlanes.map((swimlane) => {
+                if (swimlane.id === data.destinationSwimlaneId) {
+                    return {
+                        ...swimlane,
+                        tickets: [...swimlane.tickets, data.ticket],
+                    };
+                }
+                return {
+                    ...swimlane,
+                    tickets: swimlane.tickets.filter((ticket) => ticket.id !== data.ticket.id),
+                };
+            })
+        }));
+    }, [])
+
     return (
-        <DataContext.Provider value={{ data, setData, addTicket }}>
+        <DataContext.Provider value={{ data, addTicket, moveTicket }}>
             <DefaultLayout>
                 <div className="flex gap-4 h-full w-fit">
                     {data.swimlanes.map((swimlane) => (
@@ -134,10 +164,19 @@ function Swimlane({ details }: { details: Swimlane }) {
 type Ticket = {
     id: string;
     title: string;
+    description: string;
+    startDate: CalendarDate;
+    dueDate: CalendarDate;
+    tags: Tag[]
 };
 
+type Tag = {
+    color: string;
+    title: string;
+}
+
 const Ticket = ({ details }: { details: Ticket }) => {
-    const { data, setData } = useContext(DataContext);
+    const { data, moveTicket } = useContext(DataContext);
     const { isOpen: isDetailsOpen, onOpen: onDetailsOpen, onClose: onDetailsClose } = useDisclosure();
     const { isOpen: isMoveOpen, onOpen: onMoveOpen, onClose: onMoveClose } = useDisclosure();
     const onCardDropdownAction = useCallback((action: Key) => {
@@ -153,23 +192,12 @@ const Ticket = ({ details }: { details: Ticket }) => {
         }
     }, [onDetailsOpen, onMoveOpen]);
     const onMoveAction = useCallback((action: Key) => {
-        setData((prevData) => ({
-            ...prevData,
-            swimlanes: data.swimlanes.map((swimlane) => {
-                if (swimlane.id === action) {
-                    return {
-                        ...swimlane,
-                        tickets: [...swimlane.tickets, details],
-                    };
-                }
-                return {
-                    ...swimlane,
-                    tickets: swimlane.tickets.filter((ticket) => ticket.id !== details.id),
-                };
-            })
-        }));
+        moveTicket({
+            destinationSwimlaneId: action as string,
+            ticket: details
+        })
         onMoveClose();
-    }, [data.swimlanes, details, onMoveClose, setData]);
+    }, [data.swimlanes, details, onMoveClose, moveTicket]);
 
     return (
         <>
