@@ -1,50 +1,29 @@
 import { v4 as uuidv4 } from "uuid"
 import DefaultLayout from "@/layouts/DefaultLayout";
+import { CalendarDate } from "@internationalized/date";
 import {
-    Button,
-    Card,
-    CardBody,
-    Dropdown,
-    DropdownItem,
-    DropdownMenu,
-    DropdownTrigger,
-    Modal,
-    ModalBody,
-    ModalContent,
-    ModalFooter,
-    ModalHeader,
-    Listbox,
-    ListboxItem,
-    useDisclosure,
-    Input,
-    DatePicker,
-} from "@heroui/react";
-import { getLocalTimeZone, today, parseDate, CalendarDate, Calendar } from "@internationalized/date";
-import {
-    Key,
     useCallback,
     useState,
 } from "react";
-import { createContext, useContext } from "react";
+import { createContext } from "react";
+import { type Ticket } from "../components/ticket"
+import { default as Swimlane, type Swimlane as TSwimlane } from "../components/swimlane"
 
-type AddTicketRequest = {
+export type AddTicketRequest = {
     swimlaneId: string;
-    title: string;
-    startDate: CalendarDate;
-    dueDate: CalendarDate;
-}
+} & Omit<Ticket, "id">;
 
-type AddTicketResponse = void
+export type AddTicketResponse = void
 
-type MoveTicketRequest = {
+export type MoveTicketRequest = {
     destinationSwimlaneId: string;
     ticket: Ticket
 }
 
-type MoveTicketResponse = void;
+export type MoveTicketResponse = void;
 
-const DataContext = createContext<{
-    data: { swimlanes: Swimlane[] },
+export const DataContext = createContext<{
+    data: { swimlanes: TSwimlane[] },
     addTicket: (data: AddTicketRequest) => AddTicketResponse
     moveTicket: (data: MoveTicketRequest) => MoveTicketResponse
 }>({
@@ -54,16 +33,37 @@ const DataContext = createContext<{
 });
 
 export default function IndexPage() {
-    const [data, setData] = useState<{ swimlanes: Swimlane[] }>({
+    const [data, setData] = useState<{ swimlanes: TSwimlane[] }>({
         swimlanes: [
             {
                 id: "backlog",
                 title: "Backlog",
                 gradientColors: ["#e8f1fb", "#dbeeff"],
                 tickets: [
-                    { id: "1", title: "Ticket 1" },
-                    { id: "2", title: "Ticket 2" },
-                    { id: "3", title: "Ticket 3" },
+                    {
+                        id: "1",
+                        title: "Ticket 1",
+                        description: "Some description",
+                        startDate: new CalendarDate(2025, 1, 1),
+                        dueDate: new CalendarDate(2025, 1, 1),
+                        tags: []
+                    },
+                    {
+                        id: "2",
+                        title: "Ticket 2",
+                        description: "Some description",
+                        startDate: new CalendarDate(2025, 1, 1),
+                        dueDate: new CalendarDate(2025, 1, 1),
+                        tags: []
+                    },
+                    {
+                        id: "3",
+                        title: "Ticket 3",
+                        description: "Some description",
+                        startDate: new CalendarDate(2025, 1, 1),
+                        dueDate: new CalendarDate(2025, 1, 1),
+                        tags: []
+                    },
                 ],
             },
             {
@@ -71,15 +71,36 @@ export default function IndexPage() {
                 title: "In Progress",
                 gradientColors: ["#f1fff8", "#d9f5e5"],
                 tickets: [
-                    { id: "4", title: "Ticket 4" },
-                    { id: "5", title: "Ticket 5" },
+                    {
+                        id: "4",
+                        title: "Ticket 4",
+                        description: "Some description",
+                        startDate: new CalendarDate(2025, 1, 1),
+                        dueDate: new CalendarDate(2025, 1, 1),
+                        tags: []
+                    },
+                    {
+                        id: "5",
+                        title: "Ticket 5",
+                        description: "Some description",
+                        startDate: new CalendarDate(2025, 1, 1),
+                        dueDate: new CalendarDate(2025, 1, 1),
+                        tags: []
+                    },
                 ],
             },
             {
                 id: "done",
                 title: "Done",
                 gradientColors: ["#f8f4ff", "#e9ddf9"],
-                tickets: [{ id: "6", title: "Ticket 6" }],
+                tickets: [{
+                    id: "6",
+                    title: "Ticket 6",
+                    description: "Some description",
+                    startDate: new CalendarDate(2025, 1, 1),
+                    dueDate: new CalendarDate(2025, 1, 1),
+                    tags: []
+                }],
             },
         ],
     });
@@ -87,7 +108,11 @@ export default function IndexPage() {
     const addTicket = useCallback((data: AddTicketRequest) => {
         const newTicket = {
             id: uuidv4(),
-            title: data.title
+            title: data.title,
+            description: data.description,
+            startDate: data.startDate,
+            dueDate: data.dueDate,
+            tags: data.tags
         }
         setData((prevData) => ({
             ...prevData,
@@ -134,215 +159,4 @@ export default function IndexPage() {
     )
 }
 
-type Swimlane = {
-    id: string;
-    title: string;
-    gradientColors: string[];
-    tickets: Ticket[];
-};
 
-function Swimlane({ details }: { details: Swimlane }) {
-    return (
-        <div className="flex flex-col w-[272px]">
-            <span>{details.title}</span>
-            <div
-                className="p-2 flex flex-col gap-1 rounded-md overflow-y-auto max-h-full hide-scrollbar"
-                style={{
-                    background: `linear-gradient(135deg, ${details.gradientColors.join(", ")})`,
-                    boxShadow: '0 8px 12px rgba(0, 0, 0, 0.50)',
-                }}
-            >
-                {details.tickets.map((ticket) => (
-                    <Ticket key={ticket.id} details={ticket} />
-                ))}
-                <AddCardTicket swimlaneId={details.id} swimlaneTitle={details.title} isEmptySwimlane={details.tickets.length === 0} />
-            </div>
-        </div>
-    );
-}
-
-type Ticket = {
-    id: string;
-    title: string;
-    description: string;
-    startDate: CalendarDate;
-    dueDate: CalendarDate;
-    tags: Tag[]
-};
-
-type Tag = {
-    color: string;
-    title: string;
-}
-
-const Ticket = ({ details }: { details: Ticket }) => {
-    const { data, moveTicket } = useContext(DataContext);
-    const { isOpen: isDetailsOpen, onOpen: onDetailsOpen, onClose: onDetailsClose } = useDisclosure();
-    const { isOpen: isMoveOpen, onOpen: onMoveOpen, onClose: onMoveClose } = useDisclosure();
-    const onCardDropdownAction = useCallback((action: Key) => {
-        switch (action) {
-            case "view":
-                onDetailsOpen();
-                break;
-            case "move":
-                onMoveOpen();
-                break;
-            default:
-                break;
-        }
-    }, [onDetailsOpen, onMoveOpen]);
-    const onMoveAction = useCallback((action: Key) => {
-        moveTicket({
-            destinationSwimlaneId: action as string,
-            ticket: details
-        })
-        onMoveClose();
-    }, [data.swimlanes, details, onMoveClose, moveTicket]);
-
-    return (
-        <>
-            <Dropdown>
-                <DropdownTrigger>
-                    <Card className="w-64 bg-background/70 h-20 min-h-20" isPressable isBlurred style={{ boxShadow: '0 4px 8px rgba(0, 0, 0, 0.45)' }}>
-                        <CardBody className="h-full justify-center">
-                            <span className="font-semibold">{details.title}</span>
-                            <span>Card body</span>
-                        </CardBody>
-                    </Card>
-                </DropdownTrigger>
-                <DropdownMenu onAction={onCardDropdownAction}>
-                    <DropdownItem key="move">Move card</DropdownItem>
-                    <DropdownItem key="view">View details</DropdownItem>
-                </DropdownMenu>
-            </Dropdown>
-            <Modal isOpen={isDetailsOpen} onClose={onDetailsClose}>
-                <ModalContent>
-                    <ModalHeader>Ticket Details</ModalHeader>
-                    <ModalBody>
-                        <div className="flex flex-col gap-2">
-                            <span className="font-semibold">{details.title}</span>
-                            <span>Card body</span>
-                        </div>
-                    </ModalBody>
-                    <ModalFooter>
-                        <Button variant="ghost" onPress={onDetailsClose}>
-                            Close
-                        </Button>
-                    </ModalFooter>
-                </ModalContent>
-            </Modal>
-            <Modal isOpen={isMoveOpen} onClose={onMoveClose}>
-                <ModalContent>
-                    <ModalHeader>Move Ticket</ModalHeader>
-                    <ModalBody>
-                        <Listbox onAction={onMoveAction}>
-                            {data.swimlanes.map((swimlane) => {
-                                for (const ticket of swimlane.tickets) {
-                                    if (ticket.id === details.id) {
-                                        return null;
-                                    }
-                                }
-                                return (
-                                    <ListboxItem key={swimlane.id}>
-                                        {swimlane.title}
-                                    </ListboxItem>
-                                )
-                            })}
-                        </Listbox>
-                    </ModalBody>
-                    <ModalFooter>
-                        <Button variant="ghost" onPress={onMoveClose}>
-                            Cancel
-                        </Button>
-                    </ModalFooter>
-                </ModalContent>
-            </Modal>
-        </>
-    )
-};
-
-const AddCardTicket = ({ swimlaneId, swimlaneTitle, isEmptySwimlane }: { swimlaneId: string, swimlaneTitle: string, isEmptySwimlane?: boolean }) => {
-    const { addTicket } = useContext(DataContext);
-    const { isOpen, onOpen, onClose } = useDisclosure();
-    const [title, setTitle] = useState("")
-    const [startDate, setStartDate] = useState(parseDate(today(getLocalTimeZone()).toString()));
-    const [dueDate, setDueDate] = useState(parseDate(today(getLocalTimeZone()).toString()));
-    const handlePress = useCallback(() => {
-        onOpen();
-    }, [onOpen]);
-    const handleStartDateChange = useCallback((date: CalendarDate) => {
-        setStartDate(date);
-        if (date > dueDate) {
-            setDueDate(date);
-        }
-    }, [dueDate]);
-    const handleSubmit = useCallback(() => {
-        const values: AddTicketRequest = {
-            swimlaneId,
-            title,
-            startDate,
-            dueDate
-        }
-        addTicket(values)
-        setTitle("")
-        const todayDate = parseDate(today(getLocalTimeZone()).toString())
-        setStartDate(todayDate)
-        setDueDate(todayDate)
-        onClose();
-    }, [onClose, title, startDate, dueDate, addTicket, swimlaneId]);
-    const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-        if (e.key === "Enter") {
-            e.preventDefault()
-            handleSubmit()
-        }
-    }, [handleSubmit])
-    return (
-        <>
-            <Card
-                className={`w-64 h-16 min-h-16 bg-background/25 text-background font-bold border border-dashed border-background mt-2 ${isEmptySwimlane && "mb-2"}`}
-                isPressable
-                onPress={handlePress}>
-                <CardBody className="justify-center items-center">
-                    <span>Add card</span>
-                </CardBody>
-            </Card>
-            <Modal isOpen={isOpen} onClose={onClose} onKeyDown={handleKeyDown}>
-                <ModalContent>
-                    <ModalHeader>Add Ticket to {swimlaneTitle}</ModalHeader>
-                    <ModalBody>
-                        <Input
-                            label="Title"
-                            labelPlacement="inside"
-                            name="title"
-                            value={title}
-                            onValueChange={setTitle}
-                        />
-                        <div className="flex gap-2 w-full wrap">
-                            <DatePicker
-                                value={startDate}
-                                onChange={handleStartDateChange}
-                                label="Start Date"
-                                labelPlacement="inside"
-                            />
-                            <DatePicker
-                                value={dueDate}
-                                onChange={setDueDate}
-                                label="Due Date"
-                                labelPlacement="inside"
-                                minValue={startDate}
-                            />
-                        </div>
-                    </ModalBody>
-                    <ModalFooter>
-                        <Button variant="ghost" onPress={onClose}>
-                            Close
-                        </Button>
-                        <Button variant="solid" onPress={() => handleSubmit()}>
-                            Submit
-                        </Button>
-                    </ModalFooter>
-                </ModalContent>
-            </Modal>
-        </>
-    )
-}
