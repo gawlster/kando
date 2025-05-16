@@ -1,4 +1,4 @@
-import { AddTicketRequest, DataContext } from "../pages"
+import { Database } from "@/database/supabase";
 import {
     Button,
     Card,
@@ -30,60 +30,15 @@ import {
 } from "react";
 import { useContext } from "react";
 
-export type Ticket = {
-    id: string;
-    title: string;
-    description: string;
-    startDate: CalendarDate;
-    dueDate: CalendarDate;
-    tags: Tag[]
-};
-
-export type Tag = {
-    color: string;
-    title: string;
-}
-
-const allTags = [
-    {
-        color: "red-800",
-        title: "Testing"
-    },
-    {
-        color: "blue-800",
-        title: "something"
-    }
-]
+type Ticket = Database["public"]["Tables"]["ticket"]["Row"]
 
 export default function Ticket({ details }: { details: Ticket }) {
-    const { data, moveTicket, updateTicket } = useContext(DataContext);
     const [editableTitle, setEditableTitle] = useState(details.title)
     const [editableDescription, setEditableDescription] = useState(details.description)
-    const [editableStartDate, setEditableStartDate] = useState(details.startDate)
-    const [editableDueDate, setEditableDueDate] = useState(details.dueDate)
-    const [editableTags, setEditableTags] = useState(details.tags)
+    const [editableStartDate, setEditableStartDate] = useState(parseDate(details.startDate))
+    const [editableDueDate, setEditableDueDate] = useState(parseDate(details.dueDate))
     const { isOpen: isDetailsOpen, onOpen: onDetailsOpen, onClose: onDetailsClose } = useDisclosure();
     const { isOpen: isMoveOpen, onOpen: onMoveOpen, onClose: onMoveClose } = useDisclosure();
-    const onDetailsSave = useCallback(() => {
-        updateTicket({
-            id: details.id,
-            title: editableTitle,
-            description: editableDescription,
-            startDate: editableStartDate,
-            dueDate: editableDueDate,
-            tags: editableTags
-        })
-        onDetailsClose();
-    }, [
-        details.id,
-        editableTitle,
-        editableDescription,
-        editableStartDate,
-        editableDueDate,
-        editableTags,
-        onDetailsClose,
-        updateTicket
-    ])
     const onCardDropdownAction = useCallback((action: Key) => {
         switch (action) {
             case "view":
@@ -96,13 +51,34 @@ export default function Ticket({ details }: { details: Ticket }) {
                 break;
         }
     }, [onDetailsOpen, onMoveOpen]);
+    const onDetailsSave = useCallback(() => {
+        //        updateTicket({
+        //            id: details.id,
+        //            title: editableTitle,
+        //            description: editableDescription,
+        //            startDate: editableStartDate,
+        //            dueDate: editableDueDate,
+        //            tags: editableTags
+        //        })
+        onDetailsClose();
+    }, [
+        details.id,
+        editableTitle,
+        editableDescription,
+        editableStartDate,
+        editableDueDate,
+        onDetailsClose,
+    ])
     const onMoveAction = useCallback((action: Key) => {
-        moveTicket({
-            destinationSwimlaneId: action as string,
-            ticket: details
-        })
+        //         moveTicket({
+        //             destinationSwimlaneId: action as string,
+        //             ticket: details
+        //         })
         onMoveClose();
-    }, [details, onMoveClose, moveTicket]);
+    }, [
+        details,
+        onMoveClose
+    ]);
 
     return (
         <>
@@ -111,7 +87,7 @@ export default function Ticket({ details }: { details: Ticket }) {
                     <Card className="w-64 bg-background/70 h-20 min-h-20" isPressable isBlurred style={{ boxShadow: '0 4px 8px rgba(0, 0, 0, 0.45)' }}>
                         <CardBody className="h-full justify-center">
                             <span className="font-semibold">{details.title}</span>
-                            <span>Card body</span>
+                            <span>Card body: TODO</span>
                         </CardBody>
                     </Card>
                 </DropdownTrigger>
@@ -153,49 +129,6 @@ export default function Ticket({ details }: { details: Ticket }) {
                                 minValue={editableStartDate}
                             />
                         </div>
-                        <Select
-                            isMultiline
-                            items={allTags}
-                            label="Tags"
-                            labelPlacement="inside"
-                            renderValue={(items) => (
-                                <div className="flex flex-wrap gap-2">
-                                    {items.map((item) => (
-                                        <Chip
-                                            key={item.key}
-                                            classNames={{
-                                                base: `bg-${item.data?.color}`
-                                            }}
-                                            onClose={() => setEditableTags((prevTags) => prevTags.filter((tag) => tag.title !== item.data?.title))}
-                                        >{item.data?.title}</Chip>
-                                    ))}
-                                </div>
-                            )}
-                            selectionMode="multiple"
-                            onSelectionChange={(selectedTitles) => {
-                                if (!(selectedTitles instanceof Set)) {
-                                    setEditableTags([])
-                                }
-                                const arrayTitles = Array.from(selectedTitles)
-                                const tagsArray = []
-                                for (const title of arrayTitles) {
-                                    for (const tag of allTags) {
-                                        if (tag.title === title) {
-                                            tagsArray.push(tag)
-                                            break
-                                        }
-                                    }
-                                }
-                                setEditableTags(tagsArray)
-                            }}
-                            selectedKeys={editableTags.map((tag) => tag.title)}
-                        >
-                            {(tag) => (
-                                <SelectItem key={tag.title}>
-                                    {tag.title}
-                                </SelectItem>
-                            )}
-                        </Select>
                     </ModalBody>
                     <ModalFooter>
                         <Button variant="ghost" onPress={onDetailsClose}>
@@ -212,18 +145,7 @@ export default function Ticket({ details }: { details: Ticket }) {
                     <ModalHeader>Move Ticket</ModalHeader>
                     <ModalBody>
                         <Listbox onAction={onMoveAction}>
-                            {data.swimlanes.map((swimlane) => {
-                                for (const ticket of swimlane.tickets) {
-                                    if (ticket.id === details.id) {
-                                        return null;
-                                    }
-                                }
-                                return (
-                                    <ListboxItem key={swimlane.id}>
-                                        {swimlane.title}
-                                    </ListboxItem>
-                                )
-                            })}
+                            <div></div>
                         </Listbox>
                     </ModalBody>
                     <ModalFooter>
@@ -236,6 +158,63 @@ export default function Ticket({ details }: { details: Ticket }) {
         </>
     )
 }
+
+//                            {data.swimlanes.map((swimlane) => {
+//                                for (const ticket of swimlane.tickets) {
+//                                    if (ticket.id === details.id) {
+//                                        return null;
+//                                    }
+//                                }
+//                                return (
+//                                    <ListboxItem key={swimlane.id}>
+//                                        {swimlane.title}
+//                                    </ListboxItem>
+//                                )
+//                            })}
+
+//                        <Select
+//                            isMultiline
+//                            items={[]}
+//                            label="Tags"
+//                            labelPlacement="inside"
+//                            renderValue={(items) => (
+//                                <div className="flex flex-wrap gap-2">
+//                                    {items.map((item) => (
+//                                        <Chip
+//                                            key={item.key}
+//                                            classNames={{
+//                                                base: `bg-${item.data?.color}`
+//                                            }}
+//                                            onClose={() => setEditableTags((prevTags) => prevTags.filter((tag) => tag.title !== item.data?.title))}
+//                                        >{item.data?.title}</Chip>
+//                                    ))}
+//                                </div>
+//                            )}
+//                            selectionMode="multiple"
+//                            onSelectionChange={(selectedTitles) => {
+//                                if (!(selectedTitles instanceof Set)) {
+//                                    setEditableTags([])
+//                                }
+//                                const arrayTitles = Array.from(selectedTitles)
+//                                const tagsArray = []
+//                                for (const title of arrayTitles) {
+//                                    for (const tag of allTags) {
+//                                        if (tag.title === title) {
+//                                            tagsArray.push(tag)
+//                                            break
+//                                        }
+//                                    }
+//                                }
+//                                setEditableTags(tagsArray)
+//                            }}
+//                            selectedKeys={editableTags.map((tag) => tag.title)}
+//                        >
+//                            {(tag) => (
+//                                <SelectItem key={tag.title}>
+//                                    {tag.title}
+//                                </SelectItem>
+//                            )}
+//                        </Select>
 
 export function AddCardTicket({ swimlaneId, swimlaneTitle, isEmptySwimlane }: { swimlaneId: string, swimlaneTitle: string, isEmptySwimlane?: boolean }) {
     const { addTicket } = useContext(DataContext);
