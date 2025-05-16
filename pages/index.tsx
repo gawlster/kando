@@ -22,14 +22,20 @@ export type MoveTicketRequest = {
 
 export type MoveTicketResponse = void;
 
+export type UpdateTicketRequest = Ticket;
+
+export type UpdateTicketResponse = void;
+
 export const DataContext = createContext<{
     data: { swimlanes: TSwimlane[] },
     addTicket: (data: AddTicketRequest) => AddTicketResponse
     moveTicket: (data: MoveTicketRequest) => MoveTicketResponse
+    updateTicket: (data: UpdateTicketRequest) => UpdateTicketResponse
 }>({
     data: { swimlanes: [] },
     addTicket: () => null,
-    moveTicket: () => null
+    moveTicket: () => null,
+    updateTicket: () => null
 });
 
 export default function IndexPage() {
@@ -146,8 +152,25 @@ export default function IndexPage() {
         }));
     }, [])
 
+    const updateTicket = useCallback((data: UpdateTicketRequest) => {
+        setData((prevData) => ({
+            ...prevData,
+            swimlanes: prevData.swimlanes.map((swimlane) => {
+                return {
+                    ...swimlane,
+                    tickets: swimlane.tickets.map((ticket) => {
+                        if (ticket.id !== data.id) {
+                            return ticket
+                        }
+                        return data
+                    })
+                }
+            })
+        }))
+    }, [])
+
     return (
-        <DataContext.Provider value={{ data, addTicket, moveTicket }}>
+        <DataContext.Provider value={{ data, addTicket, moveTicket, updateTicket }}>
             <DefaultLayout>
                 <div className="flex gap-4 h-full w-fit">
                     {data.swimlanes.map((swimlane) => (

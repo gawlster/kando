@@ -17,6 +17,10 @@ import {
     useDisclosure,
     Input,
     DatePicker,
+    Textarea,
+    Select,
+    Chip,
+    SelectItem,
 } from "@heroui/react";
 import { getLocalTimeZone, today, parseDate, CalendarDate } from "@internationalized/date";
 import {
@@ -40,10 +44,46 @@ export type Tag = {
     title: string;
 }
 
+const allTags = [
+    {
+        color: "red-800",
+        title: "Testing"
+    },
+    {
+        color: "blue-800",
+        title: "something"
+    }
+]
+
 export default function Ticket({ details }: { details: Ticket }) {
-    const { data, moveTicket } = useContext(DataContext);
+    const { data, moveTicket, updateTicket } = useContext(DataContext);
+    const [editableTitle, setEditableTitle] = useState(details.title)
+    const [editableDescription, setEditableDescription] = useState(details.description)
+    const [editableStartDate, setEditableStartDate] = useState(details.startDate)
+    const [editableDueDate, setEditableDueDate] = useState(details.dueDate)
+    const [editableTags, setEditableTags] = useState(details.tags)
     const { isOpen: isDetailsOpen, onOpen: onDetailsOpen, onClose: onDetailsClose } = useDisclosure();
     const { isOpen: isMoveOpen, onOpen: onMoveOpen, onClose: onMoveClose } = useDisclosure();
+    const onDetailsSave = useCallback(() => {
+        updateTicket({
+            id: details.id,
+            title: editableTitle,
+            description: editableDescription,
+            startDate: editableStartDate,
+            dueDate: editableDueDate,
+            tags: editableTags
+        })
+        onDetailsClose();
+    }, [
+        details.id,
+        editableTitle,
+        editableDescription,
+        editableStartDate,
+        editableDueDate,
+        editableTags,
+        onDetailsClose,
+        updateTicket
+    ])
     const onCardDropdownAction = useCallback((action: Key) => {
         switch (action) {
             case "view":
@@ -62,7 +102,7 @@ export default function Ticket({ details }: { details: Ticket }) {
             ticket: details
         })
         onMoveClose();
-    }, [data.swimlanes, details, onMoveClose, moveTicket]);
+    }, [details, onMoveClose, moveTicket]);
 
     return (
         <>
@@ -84,14 +124,85 @@ export default function Ticket({ details }: { details: Ticket }) {
                 <ModalContent>
                     <ModalHeader>Ticket Details</ModalHeader>
                     <ModalBody>
-                        <div className="flex flex-col gap-2">
-                            <span className="font-semibold">{details.title}</span>
-                            <span>Card body</span>
+                        <Input
+                            label="Title"
+                            labelPlacement="inside"
+                            name="title"
+                            value={editableTitle}
+                            onValueChange={setEditableTitle}
+                        />
+                        <Textarea
+                            label="Description"
+                            labelPlacement="inside"
+                            name="description"
+                            value={editableDescription}
+                            onValueChange={setEditableDescription}
+                        />
+                        <div className="flex gap-2 w-full wrap">
+                            <DatePicker
+                                value={editableStartDate}
+                                onChange={setEditableStartDate}
+                                label="Start Date"
+                                labelPlacement="inside"
+                            />
+                            <DatePicker
+                                value={editableDueDate}
+                                onChange={setEditableDueDate}
+                                label="Due Date"
+                                labelPlacement="inside"
+                                minValue={editableStartDate}
+                            />
                         </div>
+                        <Select
+                            isMultiline
+                            items={allTags}
+                            label="Tags"
+                            labelPlacement="inside"
+                            renderValue={(items) => (
+                                <div className="flex flex-wrap gap-2">
+                                    {items.map((item) => (
+                                        <Chip
+                                            key={item.key}
+                                            classNames={{
+                                                base: `bg-${item.data?.color}`
+                                            }}
+                                            onClose={() => setEditableTags((prevTags) => prevTags.filter((tag) => tag.title !== item.data?.title))}
+                                        >{item.data?.title}</Chip>
+                                    ))}
+                                </div>
+                            )}
+                            selectionMode="multiple"
+                            onSelectionChange={(selectedTitles) => {
+                                if (!(selectedTitles instanceof Set)) {
+                                    setEditableTags([])
+                                }
+                                const arrayTitles = Array.from(selectedTitles)
+                                const tagsArray = []
+                                for (const title of arrayTitles) {
+                                    for (const tag of allTags) {
+                                        if (tag.title === title) {
+                                            tagsArray.push(tag)
+                                            break
+                                        }
+                                    }
+                                }
+                                setEditableTags(tagsArray)
+                            }}
+                            selectedKeys={editableTags.map((tag) => tag.title)}
+                        >
+                            {(tag) => (
+                                <SelectItem key={tag.title}>
+                                    {tag.title}
+                                </SelectItem>
+                            )}
+                        </Select>
                     </ModalBody>
                     <ModalFooter>
                         <Button variant="ghost" onPress={onDetailsClose}>
                             Close
+                        </Button>
+                        <Button onPress={onDetailsSave}>
+                            Save
                         </Button>
                     </ModalFooter>
                 </ModalContent>
@@ -124,14 +235,16 @@ export default function Ticket({ details }: { details: Ticket }) {
             </Modal>
         </>
     )
-};
+}
 
 export function AddCardTicket({ swimlaneId, swimlaneTitle, isEmptySwimlane }: { swimlaneId: string, swimlaneTitle: string, isEmptySwimlane?: boolean }) {
     const { addTicket } = useContext(DataContext);
     const { isOpen, onOpen, onClose } = useDisclosure();
     const [title, setTitle] = useState("")
+    const [description, setDescription] = useState("");
     const [startDate, setStartDate] = useState(parseDate(today(getLocalTimeZone()).toString()));
     const [dueDate, setDueDate] = useState(parseDate(today(getLocalTimeZone()).toString()));
+    const [tags, setTags] = useState<Tag[]>([])
     const handlePress = useCallback(() => {
         onOpen();
     }, [onOpen]);
@@ -145,18 +258,20 @@ export function AddCardTicket({ swimlaneId, swimlaneTitle, isEmptySwimlane }: { 
         const values: AddTicketRequest = {
             swimlaneId,
             title,
-            description: "", // TODO
+            description,
             startDate,
             dueDate,
-            tags: [] // TODO
+            tags
         }
         addTicket(values)
         setTitle("")
+        setDescription("")
         const todayDate = parseDate(today(getLocalTimeZone()).toString())
         setStartDate(todayDate)
         setDueDate(todayDate)
+        setTags([])
         onClose();
-    }, [onClose, title, startDate, dueDate, addTicket, swimlaneId]);
+    }, [onClose, title, startDate, dueDate, addTicket, swimlaneId, description, tags]);
     const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
         if (e.key === "Enter") {
             e.preventDefault()
@@ -184,6 +299,13 @@ export function AddCardTicket({ swimlaneId, swimlaneTitle, isEmptySwimlane }: { 
                             value={title}
                             onValueChange={setTitle}
                         />
+                        <Textarea
+                            label="Description"
+                            labelPlacement="inside"
+                            name="description"
+                            value={description}
+                            onValueChange={setDescription}
+                        />
                         <div className="flex gap-2 w-full wrap">
                             <DatePicker
                                 value={startDate}
@@ -199,6 +321,49 @@ export function AddCardTicket({ swimlaneId, swimlaneTitle, isEmptySwimlane }: { 
                                 minValue={startDate}
                             />
                         </div>
+                        <Select
+                            isMultiline
+                            items={allTags}
+                            label="Tags"
+                            labelPlacement="inside"
+                            renderValue={(items) => (
+                                <div className="flex flex-wrap gap-2">
+                                    {items.map((item) => (
+                                        <Chip
+                                            key={item.key}
+                                            classNames={{
+                                                base: `bg-${item.data?.color}`
+                                            }}
+                                            onClose={() => setTags((prevTags) => prevTags.filter((tag) => tag.title !== item.data?.title))}
+                                        >{item.data?.title}</Chip>
+                                    ))}
+                                </div>
+                            )}
+                            selectionMode="multiple"
+                            onSelectionChange={(selectedTitles) => {
+                                if (!(selectedTitles instanceof Set)) {
+                                    setTags([])
+                                }
+                                const arrayTitles = Array.from(selectedTitles)
+                                const tagsArray = []
+                                for (const title of arrayTitles) {
+                                    for (const tag of allTags) {
+                                        if (tag.title === title) {
+                                            tagsArray.push(tag)
+                                            break
+                                        }
+                                    }
+                                }
+                                setTags(tagsArray)
+                            }}
+                            selectedKeys={tags.map((tag) => tag.title)}
+                        >
+                            {(tag) => (
+                                <SelectItem key={tag.title}>
+                                    {tag.title}
+                                </SelectItem>
+                            )}
+                        </Select>
                     </ModalBody>
                     <ModalFooter>
                         <Button variant="ghost" onPress={onClose}>
