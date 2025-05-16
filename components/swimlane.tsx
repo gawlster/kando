@@ -25,6 +25,11 @@ export default function Swimlane({ details }: { details: Swimlane }) {
             {tickets.map((ticket) => (
                 <Ticket key={ticket.id} details={ticket} />
             ))}
+            <AddCardTicket
+                swimlaneId={details.id}
+                swimlaneTitle={details.title}
+                isEmptySwimlane={tickets.length === 0}
+            />
         </Layout>
     );
 }
@@ -56,4 +61,3 @@ function Layout({
     );
 }
 
-// <AddCardTicket swimlaneId={details.id} swimlaneTitle={details.title} isEmptySwimlane={details.tickets.length === 0} />

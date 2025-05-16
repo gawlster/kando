@@ -1,4 +1,5 @@
 import { Database } from "@/database/supabase";
+import { AvailableSwimlanesContext } from "@/pages";
 import {
     Button,
     Card,
@@ -18,9 +19,6 @@ import {
     Input,
     DatePicker,
     Textarea,
-    Select,
-    Chip,
-    SelectItem,
 } from "@heroui/react";
 import { getLocalTimeZone, today, parseDate, CalendarDate } from "@internationalized/date";
 import {
@@ -33,6 +31,7 @@ import { useContext } from "react";
 type Ticket = Database["public"]["Tables"]["ticket"]["Row"]
 
 export default function Ticket({ details }: { details: Ticket }) {
+    const { swimlanes: availableSwimlanes } = useContext(AvailableSwimlanesContext)
     const [editableTitle, setEditableTitle] = useState(details.title)
     const [editableDescription, setEditableDescription] = useState(details.description)
     const [editableStartDate, setEditableStartDate] = useState(parseDate(details.startDate))
@@ -70,6 +69,7 @@ export default function Ticket({ details }: { details: Ticket }) {
         onDetailsClose,
     ])
     const onMoveAction = useCallback((action: Key) => {
+        console.log("Move action", action)
         //         moveTicket({
         //             destinationSwimlaneId: action as string,
         //             ticket: details
@@ -100,35 +100,16 @@ export default function Ticket({ details }: { details: Ticket }) {
                 <ModalContent>
                     <ModalHeader>Ticket Details</ModalHeader>
                     <ModalBody>
-                        <Input
-                            label="Title"
-                            labelPlacement="inside"
-                            name="title"
-                            value={editableTitle}
-                            onValueChange={setEditableTitle}
+                        <TicketForm
+                            title={editableTitle}
+                            setTitle={setEditableTitle}
+                            description={editableDescription}
+                            setDescription={setEditableDescription}
+                            startDate={editableStartDate}
+                            handleStartDateChange={setEditableStartDate}
+                            dueDate={editableDueDate}
+                            setDueDate={setEditableDueDate}
                         />
-                        <Textarea
-                            label="Description"
-                            labelPlacement="inside"
-                            name="description"
-                            value={editableDescription}
-                            onValueChange={setEditableDescription}
-                        />
-                        <div className="flex gap-2 w-full wrap">
-                            <DatePicker
-                                value={editableStartDate}
-                                onChange={setEditableStartDate}
-                                label="Start Date"
-                                labelPlacement="inside"
-                            />
-                            <DatePicker
-                                value={editableDueDate}
-                                onChange={setEditableDueDate}
-                                label="Due Date"
-                                labelPlacement="inside"
-                                minValue={editableStartDate}
-                            />
-                        </div>
                     </ModalBody>
                     <ModalFooter>
                         <Button variant="ghost" onPress={onDetailsClose}>
@@ -145,7 +126,16 @@ export default function Ticket({ details }: { details: Ticket }) {
                     <ModalHeader>Move Ticket</ModalHeader>
                     <ModalBody>
                         <Listbox onAction={onMoveAction}>
-                            <div></div>
+                            {availableSwimlanes.map((swimlane) => {
+                                if (swimlane.id === details.swimlaneId) {
+                                    return null;
+                                }
+                                return (
+                                    <ListboxItem key={swimlane.id}>
+                                        {swimlane.title}
+                                    </ListboxItem>
+                                )
+                            })}
                         </Listbox>
                     </ModalBody>
                     <ModalFooter>
@@ -159,18 +149,6 @@ export default function Ticket({ details }: { details: Ticket }) {
     )
 }
 
-//                            {data.swimlanes.map((swimlane) => {
-//                                for (const ticket of swimlane.tickets) {
-//                                    if (ticket.id === details.id) {
-//                                        return null;
-//                                    }
-//                                }
-//                                return (
-//                                    <ListboxItem key={swimlane.id}>
-//                                        {swimlane.title}
-//                                    </ListboxItem>
-//                                )
-//                            })}
 
 //                        <Select
 //                            isMultiline
@@ -216,14 +194,13 @@ export default function Ticket({ details }: { details: Ticket }) {
 //                            )}
 //                        </Select>
 
-export function AddCardTicket({ swimlaneId, swimlaneTitle, isEmptySwimlane }: { swimlaneId: string, swimlaneTitle: string, isEmptySwimlane?: boolean }) {
-    const { addTicket } = useContext(DataContext);
+export function AddCardTicket({ swimlaneId, swimlaneTitle, isEmptySwimlane }: { swimlaneId: number, swimlaneTitle: string, isEmptySwimlane?: boolean }) {
     const { isOpen, onOpen, onClose } = useDisclosure();
     const [title, setTitle] = useState("")
     const [description, setDescription] = useState("");
     const [startDate, setStartDate] = useState(parseDate(today(getLocalTimeZone()).toString()));
     const [dueDate, setDueDate] = useState(parseDate(today(getLocalTimeZone()).toString()));
-    const [tags, setTags] = useState<Tag[]>([])
+    const [tags, setTags] = useState<any[]>([])
     const handlePress = useCallback(() => {
         onOpen();
     }, [onOpen]);
@@ -234,15 +211,15 @@ export function AddCardTicket({ swimlaneId, swimlaneTitle, isEmptySwimlane }: { 
         }
     }, [dueDate]);
     const handleSubmit = useCallback(() => {
-        const values: AddTicketRequest = {
-            swimlaneId,
-            title,
-            description,
-            startDate,
-            dueDate,
-            tags
-        }
-        addTicket(values)
+        //         const values: AddTicketRequest = {
+        //             swimlaneId,
+        //             title,
+        //             description,
+        //             startDate,
+        //             dueDate,
+        //             tags
+        //         }
+        //         addTicket(values)
         setTitle("")
         setDescription("")
         const todayDate = parseDate(today(getLocalTimeZone()).toString())
@@ -250,7 +227,15 @@ export function AddCardTicket({ swimlaneId, swimlaneTitle, isEmptySwimlane }: { 
         setDueDate(todayDate)
         setTags([])
         onClose();
-    }, [onClose, title, startDate, dueDate, addTicket, swimlaneId, description, tags]);
+    }, [
+        onClose,
+        title,
+        startDate,
+        dueDate,
+        swimlaneId,
+        description,
+        tags
+    ]);
     const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
         if (e.key === "Enter") {
             e.preventDefault()
@@ -271,78 +256,16 @@ export function AddCardTicket({ swimlaneId, swimlaneTitle, isEmptySwimlane }: { 
                 <ModalContent>
                     <ModalHeader>Add Ticket to {swimlaneTitle}</ModalHeader>
                     <ModalBody>
-                        <Input
-                            label="Title"
-                            labelPlacement="inside"
-                            name="title"
-                            value={title}
-                            onValueChange={setTitle}
+                        <TicketForm
+                            title={title}
+                            setTitle={setTitle}
+                            description={description}
+                            setDescription={setDescription}
+                            startDate={startDate}
+                            handleStartDateChange={handleStartDateChange}
+                            dueDate={dueDate}
+                            setDueDate={setDueDate}
                         />
-                        <Textarea
-                            label="Description"
-                            labelPlacement="inside"
-                            name="description"
-                            value={description}
-                            onValueChange={setDescription}
-                        />
-                        <div className="flex gap-2 w-full wrap">
-                            <DatePicker
-                                value={startDate}
-                                onChange={handleStartDateChange}
-                                label="Start Date"
-                                labelPlacement="inside"
-                            />
-                            <DatePicker
-                                value={dueDate}
-                                onChange={setDueDate}
-                                label="Due Date"
-                                labelPlacement="inside"
-                                minValue={startDate}
-                            />
-                        </div>
-                        <Select
-                            isMultiline
-                            items={allTags}
-                            label="Tags"
-                            labelPlacement="inside"
-                            renderValue={(items) => (
-                                <div className="flex flex-wrap gap-2">
-                                    {items.map((item) => (
-                                        <Chip
-                                            key={item.key}
-                                            classNames={{
-                                                base: `bg-${item.data?.color}`
-                                            }}
-                                            onClose={() => setTags((prevTags) => prevTags.filter((tag) => tag.title !== item.data?.title))}
-                                        >{item.data?.title}</Chip>
-                                    ))}
-                                </div>
-                            )}
-                            selectionMode="multiple"
-                            onSelectionChange={(selectedTitles) => {
-                                if (!(selectedTitles instanceof Set)) {
-                                    setTags([])
-                                }
-                                const arrayTitles = Array.from(selectedTitles)
-                                const tagsArray = []
-                                for (const title of arrayTitles) {
-                                    for (const tag of allTags) {
-                                        if (tag.title === title) {
-                                            tagsArray.push(tag)
-                                            break
-                                        }
-                                    }
-                                }
-                                setTags(tagsArray)
-                            }}
-                            selectedKeys={tags.map((tag) => tag.title)}
-                        >
-                            {(tag) => (
-                                <SelectItem key={tag.title}>
-                                    {tag.title}
-                                </SelectItem>
-                            )}
-                        </Select>
                     </ModalBody>
                     <ModalFooter>
                         <Button variant="ghost" onPress={onClose}>
@@ -354,6 +277,61 @@ export function AddCardTicket({ swimlaneId, swimlaneTitle, isEmptySwimlane }: { 
                     </ModalFooter>
                 </ModalContent>
             </Modal>
+        </>
+    )
+}
+
+
+function TicketForm({
+    title,
+    setTitle,
+    description,
+    setDescription,
+    startDate,
+    handleStartDateChange,
+    dueDate,
+    setDueDate
+}: {
+    title: string,
+    setTitle: (title: string) => void,
+    description: string,
+    setDescription: (description: string) => void,
+    startDate: CalendarDate,
+    handleStartDateChange: (date: CalendarDate) => void,
+    dueDate: CalendarDate,
+    setDueDate: (date: CalendarDate) => void
+}) {
+    return (
+        <>
+            <Input
+                label="Title"
+                labelPlacement="inside"
+                name="title"
+                value={title}
+                onValueChange={setTitle}
+            />
+            <Textarea
+                label="Description"
+                labelPlacement="inside"
+                name="description"
+                value={description}
+                onValueChange={setDescription}
+            />
+            <div className="flex gap-2 w-full wrap">
+                <DatePicker
+                    value={startDate}
+                    onChange={handleStartDateChange}
+                    label="Start Date"
+                    labelPlacement="inside"
+                />
+                <DatePicker
+                    value={dueDate}
+                    onChange={setDueDate}
+                    label="Due Date"
+                    labelPlacement="inside"
+                    minValue={startDate}
+                />
+            </div>
         </>
     )
 }

@@ -2,22 +2,29 @@ import DefaultLayout from "@/layouts/DefaultLayout";
 import { default as Swimlane } from "../components/swimlane"
 import { useFetch } from "@/hooks/useFetch";
 import { type ResponseType as GetSwimlanesResponse, url } from "./api/getSwimlanes"
+import { createContext } from "react";
+
+export const AvailableSwimlanesContext = createContext<{ swimlanes: { id: number, title: string }[] }>({ swimlanes: [] })
 
 export default function IndexPage() {
     const { data: swimlanes, loading } = useFetch<GetSwimlanesResponse>(url)
 
     if (loading || !swimlanes) {
         return (
-            <Layout></Layout>
+            <AvailableSwimlanesContext.Provider value={{ swimlanes: [] }}>
+                <Layout></Layout>
+            </AvailableSwimlanesContext.Provider>
         )
     }
 
     return (
-        <Layout>
-            {swimlanes.map((swimlane) => (
-                <Swimlane key={swimlane.id} details={swimlane} />
-            ))}
-        </Layout>
+        <AvailableSwimlanesContext.Provider value={{ swimlanes: swimlanes }}>
+            <Layout>
+                {swimlanes.map((swimlane) => (
+                    <Swimlane key={swimlane.id} details={swimlane} />
+                ))}
+            </Layout>
+        </AvailableSwimlanesContext.Provider>
     )
 }
 
