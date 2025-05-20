@@ -1,4 +1,5 @@
 import { Database } from "@/database/supabase";
+import { usePost } from "@/hooks/usePost";
 import { AvailableSwimlanesContext } from "@/pages";
 import {
     Button,
@@ -27,10 +28,21 @@ import {
     useState,
 } from "react";
 import { useContext } from "react";
+import {
+    type BodyType as UpdateTicketBody,
+    type ResponseType as UpdateTicketResponse,
+    url as updateTicketUrl
+} from "../pages/api/updateTicket";
+import { useFetch } from "@/hooks/useFetch";
 
 type Ticket = Database["public"]["Tables"]["ticket"]["Row"]
 
-export default function Ticket({ details }: { details: Ticket }) {
+export default function Ticket({ details, refetchSwimlane }: { details: Ticket; refetchSwimlane: () => Promise<void> }) {
+    const {
+        doPost: updateTicketPost,
+        loading: updateLoading,
+        error: updateError
+    } = usePost<UpdateTicketBody, UpdateTicketResponse>(updateTicketUrl)
     const { swimlanes: availableSwimlanes } = useContext(AvailableSwimlanesContext)
     const [editableTitle, setEditableTitle] = useState(details.title)
     const [editableDescription, setEditableDescription] = useState(details.description)
@@ -50,23 +62,27 @@ export default function Ticket({ details }: { details: Ticket }) {
                 break;
         }
     }, [onDetailsOpen, onMoveOpen]);
-    const onDetailsSave = useCallback(() => {
-        //        updateTicket({
-        //            id: details.id,
-        //            title: editableTitle,
-        //            description: editableDescription,
-        //            startDate: editableStartDate,
-        //            dueDate: editableDueDate,
-        //            tags: editableTags
-        //        })
+    const onDetailsSave = useCallback(async () => {
+        await updateTicketPost({
+            id: details.id,
+            created_at: details.created_at,
+            title: editableTitle,
+            description: editableDescription,
+            startDate: editableStartDate.toString(),
+            dueDate: editableDueDate.toString(),
+            swimlaneId: details.swimlaneId,
+        })
+        await refetchSwimlane()
         onDetailsClose();
     }, [
-        details.id,
+        details,
         editableTitle,
         editableDescription,
         editableStartDate,
         editableDueDate,
+        updateTicketPost,
         onDetailsClose,
+        refetchSwimlane
     ])
     const onMoveAction = useCallback((action: Key) => {
         console.log("Move action", action)

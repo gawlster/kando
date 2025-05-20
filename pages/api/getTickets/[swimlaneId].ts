@@ -3,7 +3,6 @@ import { supabase } from "@/utils/supabase";
 import { NextApiRequest, NextApiResponse } from "next";
 
 export type ResponseType = Database["public"]["Tables"]["ticket"]["Row"][];
-
 export const url = "http://localhost:3000/api/getTickets";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ResponseType | { error: string }>) {

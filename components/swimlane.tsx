@@ -7,7 +7,7 @@ import { ResponseType as GetTicketsResponse, url } from "../pages/api/getTickets
 type Swimlane = Database["public"]["Tables"]["swimlane"]["Row"]
 
 export default function Swimlane({ details }: { details: Swimlane }) {
-    const { data: tickets, loading } = useFetch<GetTicketsResponse>(`${url}/${details.id}`)
+    const { data: tickets, loading, refetch } = useFetch<GetTicketsResponse>(`${url}/${details.id}`)
     const layoutProps = useMemo(() => ({
         title: details.title,
         gradientColorStart: details.gradientColorStart,
@@ -23,12 +23,13 @@ export default function Swimlane({ details }: { details: Swimlane }) {
     return (
         <Layout {...layoutProps}>
             {tickets.map((ticket) => (
-                <Ticket key={ticket.id} details={ticket} />
+                <Ticket key={ticket.id} details={ticket} refetchSwimlane={refetch} />
             ))}
             <AddCardTicket
                 swimlaneId={details.id}
                 swimlaneTitle={details.title}
                 isEmptySwimlane={tickets.length === 0}
+                refetchSwimlane={refetch}
             />
         </Layout>
     );
