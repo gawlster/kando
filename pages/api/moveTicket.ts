@@ -7,7 +7,7 @@ export type BodyType = {
     newSwimlaneId: number;
 }
 export type ResponseType = void
-export const url = "http://localhost:3000/api/moveTicket"
+export const url = "/api/moveTicket"
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ResponseType | { error: string }>) {
     if (req.method !== "POST") {

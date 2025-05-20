@@ -4,7 +4,7 @@ import { NextApiRequest, NextApiResponse } from "next";
 
 export type ResponseType = Database["public"]["Tables"]["swimlane"]["Row"][]
 
-export const url = "http://localhost:3000/api/getSwimlanes"
+export const url = "/api/getSwimlanes"
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ResponseType | { error: string }>) {
     const { data, error } = await supabase.from("swimlane").select("*")

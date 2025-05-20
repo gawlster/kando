@@ -4,7 +4,7 @@ import { NextApiRequest, NextApiResponse } from "next"
 
 export type BodyType = Omit<Database["public"]["Tables"]["ticket"]["Row"], "created_at" | "id">
 export type ResponseType = void
-export const url = "http://localhost:3000/api/addTicket"
+export const url = "/api/addTicket"
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ResponseType | { error: string }>) {
     if (req.method !== "POST") {

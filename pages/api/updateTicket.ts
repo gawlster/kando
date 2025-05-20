@@ -4,7 +4,7 @@ import { NextApiRequest, NextApiResponse } from "next"
 
 export type BodyType = Database["public"]["Tables"]["ticket"]["Row"]
 export type ResponseType = void
-export const url = "http://localhost:3000/api/updateTicket"
+export const url = "/api/updateTicket"
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ResponseType | { error: string }>) {
     if (req.method !== "POST") {
