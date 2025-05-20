@@ -23,7 +23,11 @@ export default function Swimlane({ details }: { details: Swimlane }) {
                 [details.id]: refetch
             }
         })
-    }, [])
+    }, [
+        details.id,
+        refetch,
+        setRefetchFunctions
+    ])
 
     if (loading || !tickets) {
         return (
