@@ -5,7 +5,9 @@ import { fonts } from "./_app";
 export default function Document() {
     return (
         <Html lang="en">
-            <Head />
+            <Head>
+                <link rel="manifest" href="manifest.json"></link>
+            </Head>
             <body
                 className={clsx(
                     "min-h-screen bg-background font-sans antialiased",
