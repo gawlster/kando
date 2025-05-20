@@ -21,7 +21,7 @@ import {
     DatePicker,
     Textarea,
 } from "@heroui/react";
-import { getLocalTimeZone, today, parseDate, CalendarDate } from "@internationalized/date";
+import { getLocalTimeZone, today, parseDate, CalendarDate, DateValue } from "@internationalized/date";
 import {
     Key,
     useCallback,
@@ -376,14 +376,18 @@ function TicketForm({
             />
             <div className="flex gap-2 w-full wrap">
                 <DatePicker
-                    value={startDate}
-                    onChange={handleStartDateChange}
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    value={startDate as any}
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    onChange={handleStartDateChange as any}
                     label="Start Date"
                     labelPlacement="inside"
                 />
                 <DatePicker
-                    value={dueDate}
-                    onChange={setDueDate}
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    value={dueDate as any}
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    onChange={setDueDate as any}
                     label="Due Date"
                     labelPlacement="inside"
                     minValue={startDate}
