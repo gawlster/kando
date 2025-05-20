@@ -1,6 +1,6 @@
 import { Database } from "@/database/supabase";
 import { usePost } from "@/hooks/usePost";
-import { AvailableSwimlanesContext } from "@/pages";
+import { AvailableSwimlanesContext, RefetchDataFunctionsContext } from "@/pages";
 import {
     Button,
     Card,
@@ -33,16 +33,26 @@ import {
     type ResponseType as UpdateTicketResponse,
     url as updateTicketUrl
 } from "../pages/api/updateTicket";
-import { useFetch } from "@/hooks/useFetch";
+import {
+    type BodyType as MoveTicketBody,
+    type ResponseType as MoveTicketResponse,
+    url as moveTicketUrl
+} from "../pages/api/moveTicket";
 
 type Ticket = Database["public"]["Tables"]["ticket"]["Row"]
 
-export default function Ticket({ details, refetchSwimlane }: { details: Ticket; refetchSwimlane: () => Promise<void> }) {
+export default function Ticket({ details }: { details: Ticket; }) {
+    const [refetchFunctions, _] = useContext(RefetchDataFunctionsContext)
     const {
         doPost: updateTicketPost,
         loading: updateLoading,
         error: updateError
     } = usePost<UpdateTicketBody, UpdateTicketResponse>(updateTicketUrl)
+    const {
+        doPost: moveTicketPost,
+        loading: moveLoading,
+        error: moveError
+    } = usePost<MoveTicketBody, MoveTicketResponse>(moveTicketUrl)
     const { swimlanes: availableSwimlanes } = useContext(AvailableSwimlanesContext)
     const [editableTitle, setEditableTitle] = useState(details.title)
     const [editableDescription, setEditableDescription] = useState(details.description)
@@ -72,7 +82,10 @@ export default function Ticket({ details, refetchSwimlane }: { details: Ticket; 
             dueDate: editableDueDate.toString(),
             swimlaneId: details.swimlaneId,
         })
-        await refetchSwimlane()
+        if (details?.swimlaneId && details.swimlaneId in refetchFunctions) {
+            const refetchSwimlane = refetchFunctions[details.swimlaneId]
+            await refetchSwimlane()
+        }
         onDetailsClose();
     }, [
         details,
@@ -80,19 +93,28 @@ export default function Ticket({ details, refetchSwimlane }: { details: Ticket; 
         editableDescription,
         editableStartDate,
         editableDueDate,
+        refetchFunctions,
         updateTicketPost,
-        onDetailsClose,
-        refetchSwimlane
+        onDetailsClose
     ])
-    const onMoveAction = useCallback((action: Key) => {
-        console.log("Move action", action)
-        //         moveTicket({
-        //             destinationSwimlaneId: action as string,
-        //             ticket: details
-        //         })
+    const onMoveAction = useCallback(async (action: Key) => {
+        await moveTicketPost({
+            id: details.id,
+            newSwimlaneId: Number(action)
+        })
+        if (details?.swimlaneId && details.swimlaneId in refetchFunctions) {
+            const refetchSwimlane = refetchFunctions[details.swimlaneId]
+            await refetchSwimlane()
+        }
+        if (Number(action) in refetchFunctions) {
+            const refetchSwimlane = refetchFunctions[Number(action)]
+            await refetchSwimlane()
+        }
         onMoveClose();
     }, [
         details,
+        moveTicketPost,
+        refetchFunctions,
         onMoveClose
     ]);
 
@@ -293,6 +315,18 @@ export function AddCardTicket({ swimlaneId, swimlaneTitle, isEmptySwimlane }: { 
                     </ModalFooter>
                 </ModalContent>
             </Modal>
+        </>
+    )
+}
+
+export function DisabledAddCardTicket() {
+    return (
+        <>
+            <Card className="w-64 h-16 min-h-16 bg-background/25 text-background font-bold border border-dashed border-background mt-2 mb-2">
+                <CardBody className="justify-center items-center">
+                    <span>Add card</span>
+                </CardBody>
+            </Card>
         </>
     )
 }

@@ -1,12 +1,14 @@
 import { Database } from "@/database/supabase";
-import { default as Ticket, AddCardTicket } from "./ticket"
+import { default as Ticket, AddCardTicket, DisabledAddCardTicket } from "./ticket"
 import { useFetch } from "@/hooks/useFetch";
-import { useMemo } from "react";
+import { useContext, useEffect, useMemo } from "react";
 import { ResponseType as GetTicketsResponse, url } from "../pages/api/getTickets/[swimlaneId]";
+import { RefetchDataFunctionsContext } from "@/pages";
 
 type Swimlane = Database["public"]["Tables"]["swimlane"]["Row"]
 
 export default function Swimlane({ details }: { details: Swimlane }) {
+    const [_, setRefetchFunctions] = useContext(RefetchDataFunctionsContext)
     const { data: tickets, loading, refetch } = useFetch<GetTicketsResponse>(`${url}/${details.id}`)
     const layoutProps = useMemo(() => ({
         title: details.title,
@@ -14,22 +16,32 @@ export default function Swimlane({ details }: { details: Swimlane }) {
         gradientColorEnd: details.gradientColorEnd
     }), [details.title, details.gradientColorStart, details.gradientColorEnd])
 
+    useEffect(() => {
+        setRefetchFunctions(prev => {
+            return {
+                ...prev,
+                [details.id]: refetch
+            }
+        })
+    }, [])
+
     if (loading || !tickets) {
         return (
-            <Layout {...layoutProps}></Layout>
+            <Layout {...layoutProps}>
+                <DisabledAddCardTicket />
+            </Layout>
         )
     }
 
     return (
         <Layout {...layoutProps}>
             {tickets.map((ticket) => (
-                <Ticket key={ticket.id} details={ticket} refetchSwimlane={refetch} />
+                <Ticket key={ticket.id} details={ticket} />
             ))}
             <AddCardTicket
                 swimlaneId={details.id}
                 swimlaneTitle={details.title}
                 isEmptySwimlane={tickets.length === 0}
-                refetchSwimlane={refetch}
             />
         </Layout>
     );
