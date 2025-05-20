@@ -38,6 +38,11 @@ import {
     type ResponseType as MoveTicketResponse,
     url as moveTicketUrl
 } from "../pages/api/moveTicket";
+import {
+    type BodyType as AddCardBody,
+    type ResponseType as AddCardResponse,
+    url as addCardUrl
+} from "../pages/api/addTicket";
 
 type Ticket = Database["public"]["Tables"]["ticket"]["Row"]
 
@@ -233,12 +238,17 @@ export default function Ticket({ details }: { details: Ticket; }) {
 //                        </Select>
 
 export function AddCardTicket({ swimlaneId, swimlaneTitle, isEmptySwimlane }: { swimlaneId: number, swimlaneTitle: string, isEmptySwimlane?: boolean }) {
+    const [refetchFunctions, _] = useContext(RefetchDataFunctionsContext)
+    const {
+        doPost: addTicket,
+        loading: addLoading,
+        error: addError
+    } = usePost<AddCardBody, AddCardResponse>(addCardUrl)
     const { isOpen, onOpen, onClose } = useDisclosure();
     const [title, setTitle] = useState("")
     const [description, setDescription] = useState("");
     const [startDate, setStartDate] = useState(parseDate(today(getLocalTimeZone()).toString()));
     const [dueDate, setDueDate] = useState(parseDate(today(getLocalTimeZone()).toString()));
-    const [tags, setTags] = useState<any[]>([])
     const handlePress = useCallback(() => {
         onOpen();
     }, [onOpen]);
@@ -248,31 +258,28 @@ export function AddCardTicket({ swimlaneId, swimlaneTitle, isEmptySwimlane }: { 
             setDueDate(date);
         }
     }, [dueDate]);
-    const handleSubmit = useCallback(() => {
-        //         const values: AddTicketRequest = {
-        //             swimlaneId,
-        //             title,
-        //             description,
-        //             startDate,
-        //             dueDate,
-        //             tags
-        //         }
-        //         addTicket(values)
-        setTitle("")
-        setDescription("")
-        const todayDate = parseDate(today(getLocalTimeZone()).toString())
-        setStartDate(todayDate)
-        setDueDate(todayDate)
-        setTags([])
+    const handleSubmit = useCallback(async () => {
+        await addTicket({
+            title,
+            description,
+            startDate: startDate.toString(),
+            dueDate: dueDate.toString(),
+            swimlaneId,
+        })
+        if (swimlaneId in refetchFunctions) {
+            const refetchSwimlane = refetchFunctions[swimlaneId]
+            await refetchSwimlane()
+        }
         onClose();
     }, [
-        onClose,
         title,
+        description,
         startDate,
         dueDate,
         swimlaneId,
-        description,
-        tags
+        addTicket,
+        refetchFunctions,
+        onClose
     ]);
     const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
         if (e.key === "Enter") {
