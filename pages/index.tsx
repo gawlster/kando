@@ -35,7 +35,7 @@ export default function IndexPage() {
     const clearAuthCookie = useCallback(() => {
         document.cookie = "auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
         refetchAuthCookie()
-    }, [setAuthCookie])
+    }, [refetchAuthCookie])
     useEffect(() => {
         refetchAuthCookie()
     }, [refetchAuthCookie])
@@ -67,7 +67,7 @@ function LoggedOut() {
             password
         })
         refetchAuthCookie()
-    }, [username, password])
+    }, [username, password, doLogin, refetchAuthCookie])
     return (
         <div className="w-screen min-h-screen flex items-center justify-center">
             <Card className="max-w-[400px] w-[80%] mx-auto p-4">

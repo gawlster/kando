@@ -64,7 +64,7 @@ export default function Ticket({ details }: { details: Ticket; }) {
         timeoutRef.current = setTimeout(() => {
             onMoveOpen()
         }, 500)
-    }, [onDetailsOpen])
+    }, [onMoveOpen])
     const handleCancelPress = useCallback(() => {
         if (timeoutRef.current) {
             clearTimeout(timeoutRef.current)
@@ -74,7 +74,7 @@ export default function Ticket({ details }: { details: Ticket; }) {
     const handleEndPress = useCallback(() => {
         handleCancelPress()
         onDetailsOpen()
-    }, [onDetailsOpen])
+    }, [onDetailsOpen, handleCancelPress])
     const onDetailsSave = useCallback(async () => {
         await updateTicketPost({
             id: details.id,
