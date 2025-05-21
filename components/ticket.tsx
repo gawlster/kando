@@ -22,6 +22,7 @@ import { parseDate } from "@internationalized/date";
 import {
     Key,
     useCallback,
+    useRef,
     useState,
 } from "react";
 import { useContext } from "react";
@@ -40,6 +41,7 @@ import TicketForm from "./ticket-form";
 type Ticket = Database["public"]["Tables"]["ticket"]["Row"]
 
 export default function Ticket({ details }: { details: Ticket; }) {
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null)
     const [refetchFunctions, _] = useContext(RefetchDataFunctionsContext)
     const {
         doPost: updateTicketPost,
@@ -58,18 +60,21 @@ export default function Ticket({ details }: { details: Ticket; }) {
     const [editableDueDate, setEditableDueDate] = useState(parseDate(details.dueDate))
     const { isOpen: isDetailsOpen, onOpen: onDetailsOpen, onClose: onDetailsClose } = useDisclosure();
     const { isOpen: isMoveOpen, onOpen: onMoveOpen, onClose: onMoveClose } = useDisclosure();
-    const onCardDropdownAction = useCallback((action: Key) => {
-        switch (action) {
-            case "view":
-                onDetailsOpen();
-                break;
-            case "move":
-                onMoveOpen();
-                break;
-            default:
-                break;
+    const handleStartPress = useCallback(() => {
+        timeoutRef.current = setTimeout(() => {
+            onMoveOpen()
+        }, 500)
+    }, [onDetailsOpen])
+    const handleCancelPress = useCallback(() => {
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current)
+            timeoutRef.current = null
         }
-    }, [onDetailsOpen, onMoveOpen]);
+    }, [])
+    const handleEndPress = useCallback(() => {
+        handleCancelPress()
+        onDetailsOpen()
+    }, [onDetailsOpen])
     const onDetailsSave = useCallback(async () => {
         await updateTicketPost({
             id: details.id,
@@ -118,20 +123,23 @@ export default function Ticket({ details }: { details: Ticket; }) {
 
     return (
         <>
-            <Dropdown>
-                <DropdownTrigger>
-                    <Card className="w-64 bg-background/70 h-20 min-h-20" isPressable isBlurred style={{ boxShadow: '0 4px 8px rgba(0, 0, 0, 0.45)' }}>
-                        <CardBody className="h-full justify-center">
-                            <span className="font-semibold">{details.title}</span>
-                            <span>Card body: TODO</span>
-                        </CardBody>
-                    </Card>
-                </DropdownTrigger>
-                <DropdownMenu onAction={onCardDropdownAction}>
-                    <DropdownItem key="move">Move card</DropdownItem>
-                    <DropdownItem key="view">View details</DropdownItem>
-                </DropdownMenu>
-            </Dropdown>
+            <Card
+                className="w-64 bg-background/70 h-20 min-h-20"
+                isPressable
+                isBlurred
+                style={{ boxShadow: '0 4px 8px rgba(0, 0, 0, 0.45)' }}
+                onMouseDown={handleStartPress}
+                onTouchStart={handleStartPress}
+                onMouseUp={handleEndPress}
+                onTouchEnd={handleEndPress}
+                onMouseLeave={handleCancelPress}
+                onTouchCancel={handleCancelPress}
+            >
+                <CardBody className="h-full justify-center">
+                    <span className="font-semibold">{details.title}</span>
+                    <span>Card body: TODO</span>
+                </CardBody>
+            </Card>
             <Modal isOpen={isDetailsOpen} onClose={onDetailsClose}>
                 <ModalContent>
                     <ModalHeader>Ticket Details</ModalHeader>
