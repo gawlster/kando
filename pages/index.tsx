@@ -62,8 +62,7 @@ function LoggedOut() {
         doPost: doLogin,
         loading: loginLoading,
     } = usePost<LoginPostBody, LoginPostResponse>(loginPostUrl, {
-        successMessage: "Logged in successfully",
-        errorMessage: "Invalid username or password"
+        successMessage: "Logged in successfully"
     })
     const [username, setUsername] = useState("")
     const [password, setPassword] = useState("")
@@ -76,7 +75,7 @@ function LoggedOut() {
     }, [username, password, doLogin, refetchAuthCookie])
     return (
         <div className="w-screen min-h-screen flex items-center justify-center">
-            <Card className="max-w-[400px] w-[80%] mx-auto p-4">
+            <Card className="max-w-[400px] w-[80%] mx-auto p-4 m-4">
                 <CardHeader>
                     <h1 className="text-2xl font-bold">Log in to continue</h1>
                 </CardHeader>

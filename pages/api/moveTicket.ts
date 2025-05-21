@@ -1,4 +1,3 @@
-import { Database } from "@/database/supabase"
 import { doesLoggedInUserOwnSwimlane } from "@/utils/auth";
 import { supabase } from "@/utils/supabase"
 import { NextApiRequest, NextApiResponse } from "next"
