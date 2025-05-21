@@ -1,3 +1,4 @@
+import { createToken } from "@/utils/auth";
 import { supabase } from "@/utils/supabase";
 import { NextApiRequest, NextApiResponse } from "next";
 
@@ -27,7 +28,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         return res.status(400).json({ error: "Invalid username or password" })
     }
     const user = data[0]
-    res.setHeader("Set-Cookie", `auth=${user.id}; Path=/; SameSite=Strict; Secure`)
+    const token = createToken(user.id)
+    res.setHeader("Set-Cookie", `auth=${token}; Path=/; SameSite=Strict; Secure`)
     return res.status(200).json()
 }
 
