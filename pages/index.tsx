@@ -2,7 +2,7 @@ import DefaultLayout from "@/layouts/DefaultLayout";
 import { default as Swimlane } from "../components/swimlane"
 import { useFetch } from "@/hooks/useFetch";
 import { type ResponseType as GetSwimlanesResponse, url } from "./api/getSwimlanes"
-import React, { createContext, use, useCallback, useContext, useEffect, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { Button, Card, CardBody, CardHeader, Divider, Input } from "@heroui/react";
 import { usePost } from "@/hooks/usePost";
 import {
@@ -10,6 +10,7 @@ import {
     type ResponseType as LoginPostResponse,
     url as loginPostUrl
 } from "./api/login";
+import toast, { Toaster } from "react-hot-toast";
 
 export const AuthContext = createContext<{
     authCookie: string | null,
@@ -42,12 +43,14 @@ export default function IndexPage() {
     if (!authCookie) {
         return (
             <AuthContext.Provider value={{ authCookie, clearAuthCookie, refetchAuthCookie }}>
+                <Toaster />
                 <LoggedOut />
             </AuthContext.Provider>
         )
     }
     return (
         <AuthContext.Provider value={{ authCookie, clearAuthCookie, refetchAuthCookie }}>
+            <Toaster />
             <LoggedIn />
         </AuthContext.Provider>
     )
@@ -58,7 +61,10 @@ function LoggedOut() {
     const {
         doPost: doLogin,
         loading: loginLoading,
-    } = usePost<LoginPostBody, LoginPostResponse>(loginPostUrl)
+    } = usePost<LoginPostBody, LoginPostResponse>(loginPostUrl, {
+        successMessage: "Logged in successfully",
+        errorMessage: "Invalid username or password"
+    })
     const [username, setUsername] = useState("")
     const [password, setPassword] = useState("")
     const handleSubmitPress = useCallback(async () => {

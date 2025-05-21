@@ -1,10 +1,16 @@
 import { useCallback, useState } from "react";
+import toast from "react-hot-toast";
 
-export function usePost<TBody, TData>(url: string) {
+type UsePostOptions = {
+    successMessage?: string;
+    errorMessage?: string;
+}
+
+export function usePost<TBody, TData>(url: string, opts?: UsePostOptions) {
     const [data, setData] = useState<TData | null>(null)
     const [error, setError] = useState("")
     const [loading, setLoading] = useState(false)
-    const doPost = useCallback(async (body: TBody) => {
+    const doPostCall = useCallback(async (body: TBody) => {
         setLoading(true)
         const response = await fetch(url, {
             method: "POST",
@@ -16,7 +22,7 @@ export function usePost<TBody, TData>(url: string) {
         if (!response.ok) {
             setError(response.statusText)
             setLoading(false)
-            return
+            throw new Error()
         }
         let json: TData | null
         try {
@@ -27,6 +33,17 @@ export function usePost<TBody, TData>(url: string) {
         setData(json)
         setLoading(false)
     }, [])
+    const doPost = useCallback(async (body: TBody) => {
+        try {
+            await toast.promise(doPostCall(body), {
+                loading: "Loading...",
+                success: opts?.successMessage ?? "Success!",
+                error: opts?.errorMessage ?? "Error!"
+            })
+        } catch (e) {
+            // do nothing
+        }
+    }, [doPostCall, error])
     return {
         doPost,
         data,
