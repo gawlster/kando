@@ -38,16 +38,15 @@ type Ticket = Database["public"]["Tables"]["ticket"]["Row"]
 
 export default function Ticket({ details }: { details: Ticket; }) {
     const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+    const didLongPress = useRef(false)
     const [refetchFunctions, _] = useContext(RefetchDataFunctionsContext)
     const {
         doPost: updateTicketPost,
         loading: updateLoading,
-        error: updateError
     } = usePost<UpdateTicketBody, UpdateTicketResponse>(updateTicketUrl)
     const {
         doPost: moveTicketPost,
         loading: moveLoading,
-        error: moveError
     } = usePost<MoveTicketBody, MoveTicketResponse>(moveTicketUrl)
     const { swimlanes: availableSwimlanes } = useContext(AvailableSwimlanesContext)
     const [editableTitle, setEditableTitle] = useState(details.title)
@@ -58,6 +57,7 @@ export default function Ticket({ details }: { details: Ticket; }) {
     const { isOpen: isMoveOpen, onOpen: onMoveOpen, onClose: onMoveClose } = useDisclosure();
     const handleStartPress = useCallback(() => {
         timeoutRef.current = setTimeout(() => {
+            didLongPress.current = true
             onMoveOpen()
         }, 500)
     }, [onMoveOpen])
@@ -66,9 +66,17 @@ export default function Ticket({ details }: { details: Ticket; }) {
             clearTimeout(timeoutRef.current)
             timeoutRef.current = null
         }
+        if (didLongPress.current) {
+            didLongPress.current = false
+            return true
+        }
+        return false
     }, [])
     const handleEndPress = useCallback(() => {
-        handleCancelPress()
+        const didLongPress = handleCancelPress()
+        if (didLongPress) {
+            return
+        }
         onDetailsOpen()
     }, [onDetailsOpen, handleCancelPress])
     const onDetailsSave = useCallback(async () => {
@@ -136,7 +144,7 @@ export default function Ticket({ details }: { details: Ticket; }) {
                     <span>Card body: TODO</span>
                 </CardBody>
             </Card>
-            <Modal isOpen={isDetailsOpen} onClose={onDetailsClose}>
+            <Modal isOpen={isDetailsOpen} onClose={onDetailsClose} isDismissable={!updateLoading}>
                 <ModalContent>
                     <ModalHeader>Ticket Details</ModalHeader>
                     <ModalBody>
@@ -152,16 +160,16 @@ export default function Ticket({ details }: { details: Ticket; }) {
                         />
                     </ModalBody>
                     <ModalFooter>
-                        <Button variant="ghost" onPress={onDetailsClose}>
+                        <Button variant="ghost" onPress={onDetailsClose} disabled={updateLoading}>
                             Close
                         </Button>
-                        <Button onPress={onDetailsSave}>
-                            Save
+                        <Button onPress={onDetailsSave} disabled={updateLoading}>
+                            {updateLoading ? "Loading..." : "Save"}
                         </Button>
                     </ModalFooter>
                 </ModalContent>
             </Modal>
-            <Modal isOpen={isMoveOpen} onClose={onMoveClose}>
+            <Modal isOpen={isMoveOpen} onClose={onMoveClose} isDismissable={!moveLoading}>
                 <ModalContent>
                     <ModalHeader>Move Ticket</ModalHeader>
                     <ModalBody>
@@ -179,7 +187,7 @@ export default function Ticket({ details }: { details: Ticket; }) {
                         </Listbox>
                     </ModalBody>
                     <ModalFooter>
-                        <Button variant="ghost" onPress={onMoveClose}>
+                        <Button variant="ghost" onPress={onMoveClose} disabled={moveLoading}>
                             Cancel
                         </Button>
                     </ModalFooter>
