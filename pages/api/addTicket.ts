@@ -1,4 +1,5 @@
 import { Database } from "@/database/supabase"
+import { doesLoggedInUserOwnSwimlane } from "@/utils/auth"
 import { supabase } from "@/utils/supabase"
 import { NextApiRequest, NextApiResponse } from "next"
 
@@ -17,6 +18,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     if (!isValidBody(body)) {
         return res.status(400).json({ error: "Invalid body" })
     }
+
+    const doesUserOwnSwimlane = await doesLoggedInUserOwnSwimlane(req, body.swimlaneId || -1)
+    if (!doesUserOwnSwimlane) {
+        return res.status(401).json({ error: "Unauthorized" })
+    }
+
     try {
         await supabase.from("ticket").insert(body)
         return res.status(200).json()

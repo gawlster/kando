@@ -1,4 +1,5 @@
 import { Database } from "@/database/supabase"
+import { doesLoggedInUserOwnSwimlane } from "@/utils/auth";
 import { supabase } from "@/utils/supabase"
 import { NextApiRequest, NextApiResponse } from "next"
 
@@ -20,6 +21,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     if (!isValidBody(body)) {
         return res.status(400).json({ error: "Invalid body" })
     }
+
+    const { data: ticketData, error: ticketError } = await supabase.from("ticket").select("swimlaneId").eq("id", body.id).single()
+    if (ticketError || !ticketData || !ticketData.swimlaneId) {
+        return res.status(400).json({ error: "Ticket not found" })
+    }
+    const doesUserOwnOriginalSwimlane = await doesLoggedInUserOwnSwimlane(req, ticketData.swimlaneId)
+    const doesUserOwnDestinationSwimlane = await doesLoggedInUserOwnSwimlane(req, body.newSwimlaneId || -1)
+    if (!doesUserOwnOriginalSwimlane || !doesUserOwnDestinationSwimlane) {
+        return res.status(401).json({ error: "Unauthorized" })
+    }
+
     try {
         await supabase.from("ticket").update({
             swimlaneId: body.newSwimlaneId

@@ -1,5 +1,6 @@
 import { Database } from "@/database/supabase";
-import { default as Ticket, AddCardTicket, DisabledAddCardTicket } from "./ticket"
+import Ticket from "./ticket"
+import AddTicketCard, { DisabledAddTicketCard } from "./add-ticket-card"
 import { useFetch } from "@/hooks/useFetch";
 import { useContext, useEffect, useMemo } from "react";
 import { ResponseType as GetTicketsResponse, url } from "../pages/api/getTickets/[swimlaneId]";
@@ -32,7 +33,7 @@ export default function Swimlane({ details }: { details: Swimlane }) {
     if (loading || !tickets) {
         return (
             <Layout {...layoutProps}>
-                <DisabledAddCardTicket />
+                <DisabledAddTicketCard />
             </Layout>
         )
     }
@@ -42,7 +43,7 @@ export default function Swimlane({ details }: { details: Swimlane }) {
             {tickets.map((ticket) => (
                 <Ticket key={ticket.id} details={ticket} />
             ))}
-            <AddCardTicket
+            <AddTicketCard
                 swimlaneId={details.id}
                 swimlaneTitle={details.title}
                 isEmptySwimlane={tickets.length === 0}
