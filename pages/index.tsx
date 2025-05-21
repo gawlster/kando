@@ -2,15 +2,9 @@ import DefaultLayout from "@/layouts/DefaultLayout";
 import { default as Swimlane } from "../components/swimlane"
 import { useFetch } from "@/hooks/useFetch";
 import { type ResponseType as GetSwimlanesResponse, url } from "./api/getSwimlanes"
-import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
-import { Button, Card, CardBody, CardHeader, Divider, Input } from "@heroui/react";
-import { usePost } from "@/hooks/usePost";
-import {
-    type BodyType as LoginPostBody,
-    type ResponseType as LoginPostResponse,
-    url as loginPostUrl
-} from "./api/login";
-import toast, { Toaster } from "react-hot-toast";
+import React, { createContext, useCallback, useEffect, useState } from "react";
+import { Toaster } from "react-hot-toast";
+import { LoggedOut } from "@/components/auth-forms";
 
 export const AuthContext = createContext<{
     authCookie: string | null,
@@ -56,54 +50,6 @@ export default function IndexPage() {
     )
 }
 
-function LoggedOut() {
-    const { refetchAuthCookie } = useContext(AuthContext)
-    const {
-        doPost: doLogin,
-        loading: loginLoading,
-    } = usePost<LoginPostBody, LoginPostResponse>(loginPostUrl, {
-        successMessage: "Logged in successfully"
-    })
-    const [username, setUsername] = useState("")
-    const [password, setPassword] = useState("")
-    const handleSubmitPress = useCallback(async () => {
-        await doLogin({
-            username,
-            password
-        })
-        refetchAuthCookie()
-    }, [username, password, doLogin, refetchAuthCookie])
-    return (
-        <div className="w-screen min-h-screen flex items-center justify-center">
-            <Card className="max-w-[400px] w-[80%] mx-auto p-4 m-4">
-                <CardHeader>
-                    <h1 className="text-2xl font-bold">Log in to continue</h1>
-                </CardHeader>
-                <Divider />
-                <CardBody>
-                    <div className="flex flex-col gap-2 pt-2">
-                        <Input
-                            label="Username"
-                            labelPlacement="inside"
-                            name="username"
-                            value={username}
-                            onValueChange={setUsername}
-                        />
-                        <Input
-                            label="Password"
-                            labelPlacement="inside"
-                            name="password"
-                            value={password}
-                            onValueChange={setPassword}
-                            type="password"
-                        />
-                        <Button className="mt-2" onPress={handleSubmitPress}>{loginLoading ? "Loading..." : "Submit"}</Button>
-                    </div>
-                </CardBody>
-            </Card>
-        </div>
-    )
-}
 
 export const AvailableSwimlanesContext = createContext<{ swimlanes: { id: number, title: string }[] }>({ swimlanes: [] })
 export const RefetchDataFunctionsContext = createContext<
