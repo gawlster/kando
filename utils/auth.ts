@@ -1,6 +1,7 @@
 import { NextApiRequest } from "next";
 import { supabase } from "./supabase";
 import jwt from "jsonwebtoken";
+import bcrypt from "bcryptjs";
 
 export function createToken(userId: number) {
     const secret = process.env.JWT_SECRET;
@@ -31,7 +32,7 @@ export async function getLoggedInUser(req: NextApiRequest) {
     if (!token) {
         return null;
     }
-    const userId = await getUserIdFromToken(token);
+    const userId = getUserIdFromToken(token);
     if (!userId) {
         return null;
     }
@@ -53,3 +54,15 @@ export async function doesLoggedInUserOwnSwimlane(req: NextApiRequest, swimlaneI
     }
     return true;
 }
+
+export async function hashPassword(password: string) {
+    const salt = await bcrypt.genSalt(10);
+    const hash = await bcrypt.hash(password, salt);
+    return hash;
+}
+
+export async function comparePassword(password: string, passwordHash: string) {
+    const isMatch = await bcrypt.compare(password, passwordHash);
+    return isMatch;
+}
+

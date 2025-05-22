@@ -1,4 +1,4 @@
-import { createToken } from "@/utils/auth";
+import { comparePassword, createToken } from "@/utils/auth";
 import { supabase } from "@/utils/supabase";
 import { NextApiRequest, NextApiResponse } from "next";
 
@@ -20,7 +20,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     if (!isValidBody(body)) {
         return res.status(400).json({ error: "Invalid body" })
     }
-    const { data, error } = await supabase.from("user").select("*").eq("username", body.username).eq("passwordHash", body.password)
+    const { data, error } = await supabase.from("user").select("*").eq("username", body.username)
     if (error) {
         return res.status(400).json({ error: error.message })
     }
@@ -28,6 +28,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         return res.status(400).json({ error: "Invalid username or password" })
     }
     const user = data[0]
+    const doesPasswordMatchHash = await comparePassword(body.password, user.passwordHash)
+    if (!doesPasswordMatchHash) {
+        return res.status(400).json({ error: "Invalid username or password" })
+    }
     const token = createToken(user.id)
     res.setHeader("Set-Cookie", `auth=${token}; Path=/; SameSite=Strict; Secure`)
     return res.status(200).json()

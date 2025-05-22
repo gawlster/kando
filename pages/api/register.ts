@@ -1,4 +1,4 @@
-import { createToken } from "@/utils/auth";
+import { createToken, hashPassword } from "@/utils/auth";
 import { supabase } from "@/utils/supabase";
 import { NextApiRequest, NextApiResponse } from "next";
 
@@ -30,11 +30,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         return res.status(400).json({ error: "Username already exists" })
     }
 
+    const passwordHash = await hashPassword(body.password)
+
     const { data: newUser, error } = await supabase.from("user").insert({
         username: body.username,
-        passwordHash: body.password
+        passwordHash
     }).select("*").single()
-    console.log(newUser)
     if (error) {
         return res.status(400).json({ error: error.message })
     }
