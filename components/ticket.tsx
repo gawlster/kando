@@ -39,7 +39,7 @@ type Ticket = Database["public"]["Tables"]["ticket"]["Row"]
 export default function Ticket({ details }: { details: Ticket; }) {
     const timeoutRef = useRef<NodeJS.Timeout | null>(null)
     const didLongPress = useRef(false)
-    const [refetchFunctions, _] = useContext(RefetchDataFunctionsContext)
+    const { refetchSwimlane } = useContext(RefetchDataFunctionsContext)
     const {
         doPost: updateTicketPost,
         loading: updateLoading,
@@ -89,9 +89,8 @@ export default function Ticket({ details }: { details: Ticket; }) {
             dueDate: editableDueDate.toString(),
             swimlaneId: details.swimlaneId,
         })
-        if (details?.swimlaneId && details.swimlaneId in refetchFunctions) {
-            const refetchSwimlane = refetchFunctions[details.swimlaneId]
-            await refetchSwimlane()
+        if (details?.swimlaneId) {
+            await refetchSwimlane(details.swimlaneId)
         }
         onDetailsClose();
     }, [
@@ -100,8 +99,8 @@ export default function Ticket({ details }: { details: Ticket; }) {
         editableDescription,
         editableStartDate,
         editableDueDate,
-        refetchFunctions,
         updateTicketPost,
+        refetchSwimlane,
         onDetailsClose
     ])
     const onMoveAction = useCallback(async (action: Key) => {
@@ -109,19 +108,17 @@ export default function Ticket({ details }: { details: Ticket; }) {
             id: details.id,
             newSwimlaneId: Number(action)
         })
-        if (details?.swimlaneId && details.swimlaneId in refetchFunctions) {
-            const refetchSwimlane = refetchFunctions[details.swimlaneId]
-            await refetchSwimlane()
+        if (details?.swimlaneId) {
+            await refetchSwimlane(details.swimlaneId)
         }
-        if (Number(action) in refetchFunctions) {
-            const refetchSwimlane = refetchFunctions[Number(action)]
-            await refetchSwimlane()
+        if (!isNaN(Number(action))) {
+            await refetchSwimlane(Number(action));
         }
         onMoveClose();
     }, [
         details,
         moveTicketPost,
-        refetchFunctions,
+        refetchSwimlane,
         onMoveClose
     ]);
 

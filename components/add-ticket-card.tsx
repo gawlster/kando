@@ -25,7 +25,7 @@ import {
 import TicketForm from "./ticket-form";
 
 export default function AddTicketCard({ swimlaneId, swimlaneTitle, isEmptySwimlane }: { swimlaneId: number, swimlaneTitle: string, isEmptySwimlane?: boolean }) {
-    const [refetchFunctions, _] = useContext(RefetchDataFunctionsContext)
+    const { refetchSwimlane } = useContext(RefetchDataFunctionsContext)
     const {
         doPost: addTicket,
         loading: addLoading,
@@ -53,19 +53,16 @@ export default function AddTicketCard({ swimlaneId, swimlaneTitle, isEmptySwimla
             dueDate: dueDate.toString(),
             swimlaneId,
         })
-        if (swimlaneId in refetchFunctions) {
-            const refetchSwimlane = refetchFunctions[swimlaneId]
-            await refetchSwimlane()
-        }
+        await refetchSwimlane(swimlaneId);
         onClose();
     }, [
+        addTicket,
+        refetchSwimlane,
+        swimlaneId,
         title,
         description,
         startDate,
         dueDate,
-        swimlaneId,
-        addTicket,
-        refetchFunctions,
         onClose
     ]);
     const handleKeyDown = useCallback((e: React.KeyboardEvent) => {

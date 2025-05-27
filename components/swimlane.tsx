@@ -9,7 +9,7 @@ import { RefetchDataFunctionsContext } from "@/pages";
 type Swimlane = Database["public"]["Tables"]["swimlane"]["Row"]
 
 export default function Swimlane({ details }: { details: Swimlane }) {
-    const [_, setRefetchFunctions] = useContext(RefetchDataFunctionsContext)
+    const { registerRefetchFunction } = useContext(RefetchDataFunctionsContext)
     const { data: tickets, loading, refetch } = useFetch<GetTicketsResponse>(`${url}/${details.id}`)
     const layoutProps = useMemo(() => ({
         title: details.title,
@@ -18,16 +18,11 @@ export default function Swimlane({ details }: { details: Swimlane }) {
     }), [details.title, details.gradientColorStart, details.gradientColorEnd])
 
     useEffect(() => {
-        setRefetchFunctions(prev => {
-            return {
-                ...prev,
-                [details.id]: refetch
-            }
-        })
+        registerRefetchFunction(details.id, refetch);
     }, [
         details.id,
         refetch,
-        setRefetchFunctions
+        registerRefetchFunction
     ])
 
     if (loading || !tickets) {

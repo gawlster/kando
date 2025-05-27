@@ -52,27 +52,64 @@ export default function IndexPage() {
 
 
 export const AvailableSwimlanesContext = createContext<{ swimlanes: { id: number, title: string }[] }>({ swimlanes: [] })
-export const RefetchDataFunctionsContext = createContext<
-    [
-        Record<number, () => Promise<void>>,
-        React.Dispatch<React.SetStateAction<Record<number, () => Promise<void>>>>
-    ]
->([{}, () => { }])
+type RefetchDataFunctionsContextType = {
+    refetchAllSwimlanes: () => Promise<void>,
+    registerRefetchFunction: (swimlaneId: number, refetchFunction: () => Promise<void>) => void,
+    refetchSwimlane: (swimlaneId: number) => Promise<void>
+}
+export const RefetchDataFunctionsContext = createContext<RefetchDataFunctionsContextType>({
+    refetchAllSwimlanes: async () => { },
+    registerRefetchFunction: () => { },
+    refetchSwimlane: async () => { }
+})
 
 function LoggedIn() {
-    const { data: swimlanes, loading } = useFetch<GetSwimlanesResponse>(url)
-    const refetchDataFunctionsState = useState<Record<number, () => Promise<void>>>({})
+    const { data: swimlanes, loading, refetch } = useFetch<GetSwimlanesResponse>(url)
+    const [refetchDataFunctions, setRefetchDataFunctions] = useState<{
+        refetchAllSwimlanes: () => Promise<void>,
+        swimlanes: Record<number, () => Promise<void>>
+    }>({
+        refetchAllSwimlanes: refetch,
+        swimlanes: {}
+    })
+
+    const registerRefetchFunction = useCallback((swimlaneId: number, refetchFunction: () => Promise<void>) => {
+        setRefetchDataFunctions(prev => ({
+            ...prev,
+            swimlanes: {
+                ...prev.swimlanes,
+                [swimlaneId]: refetchFunction
+            }
+        }))
+    }, [setRefetchDataFunctions]);
+
+    const refetchSwimlane = useCallback(async (swimlaneId: number) => {
+        if (swimlaneId in refetchDataFunctions.swimlanes) {
+            const refetchFunction = refetchDataFunctions.swimlanes[swimlaneId];
+            await refetchFunction();
+        } else {
+            console.warn(`No refetch function registered for swimlane ID ${swimlaneId}`);
+        }
+    }, [refetchDataFunctions]);
 
     if (loading || !swimlanes) {
         return (
-            <ContextProviders swimlanes={[]} refetchDataFunctionsState={refetchDataFunctionsState}>
+            <ContextProviders swimlanes={[]} refetchDataFunctionsState={{
+                refetchAllSwimlanes: refetch,
+                registerRefetchFunction,
+                refetchSwimlane
+            }}>
                 <Layout></Layout>
             </ContextProviders>
         )
     }
 
     return (
-        <ContextProviders swimlanes={swimlanes} refetchDataFunctionsState={refetchDataFunctionsState}>
+        <ContextProviders swimlanes={swimlanes} refetchDataFunctionsState={{
+            refetchAllSwimlanes: refetch,
+            registerRefetchFunction,
+            refetchSwimlane
+        }}>
             <Layout>
                 {swimlanes.map((swimlane) => (
                     <Swimlane key={swimlane.id} details={swimlane} />
@@ -94,8 +131,8 @@ function Layout({ children }: { children?: React.ReactNode }) {
 
 function ContextProviders({ children, swimlanes, refetchDataFunctionsState }: {
     children: React.ReactNode;
-    swimlanes: { id: number, title: string }[]
-    refetchDataFunctionsState: [Record<number, () => Promise<void>>, React.Dispatch<React.SetStateAction<Record<number, () => Promise<void>>>>]
+    swimlanes: { id: number, title: string }[];
+    refetchDataFunctionsState: RefetchDataFunctionsContextType;
 }) {
     return (
         <AvailableSwimlanesContext.Provider value={{ swimlanes: swimlanes }}>

@@ -1,5 +1,6 @@
 import LogoutButton from "@/components/logout-button";
 import { Head } from "./head";
+import AddSwimlaneButton from "@/components/add-swimlane-button";
 
 export default function DefaultLayout({
     children,
@@ -17,6 +18,7 @@ export default function DefaultLayout({
                     Header and other stuff
                 </span>
                 <LogoutButton />
+                <AddSwimlaneButton />
             </div>
             <main className="h-full p-4 w-full overflow-x-auto">{children}</main>
         </div>
