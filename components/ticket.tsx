@@ -160,7 +160,7 @@ export default function Ticket({ details }: { details: Ticket; }) {
                         <Button variant="ghost" onPress={onDetailsClose} disabled={updateLoading}>
                             Close
                         </Button>
-                        <Button onPress={onDetailsSave} disabled={updateLoading}>
+                        <Button onPress={onDetailsSave} isLoading={updateLoading}>
                             {updateLoading ? "Loading..." : "Save"}
                         </Button>
                     </ModalFooter>

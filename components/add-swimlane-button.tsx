@@ -43,7 +43,7 @@ export default function AddSwimlaneButton() {
                         <Button variant="ghost" onPress={onClose} disabled={loading}>
                             Cancel
                         </Button>
-                        <Button onPress={handleSubmit} disabled={loading}>
+                        <Button onPress={handleSubmit} isLoading={loading}>
                             {loading ? "Loading..." : "Add"}
                         </Button>
                     </ModalFooter>
