@@ -36,6 +36,7 @@ export default function AddTicketCard({ swimlaneId, swimlaneTitle, isEmptySwimla
     const [description, setDescription] = useState("");
     const [startDate, setStartDate] = useState(parseDate(today(getLocalTimeZone()).toString()));
     const [dueDate, setDueDate] = useState(parseDate(today(getLocalTimeZone()).toString()));
+    const [selectedTagIds, setSelectedTagIds] = useState<Set<string>>(new Set());
     const handlePress = useCallback(() => {
         onOpen();
     }, [onOpen]);
@@ -52,17 +53,19 @@ export default function AddTicketCard({ swimlaneId, swimlaneTitle, isEmptySwimla
             startDate: startDate.toString(),
             dueDate: dueDate.toString(),
             swimlaneId,
+            tagIds: Array.from(selectedTagIds).map((tagId) => Number(tagId))
         })
         await refetchSwimlane(swimlaneId);
         onClose();
     }, [
         addTicket,
-        refetchSwimlane,
-        swimlaneId,
         title,
         description,
         startDate,
         dueDate,
+        swimlaneId,
+        selectedTagIds,
+        refetchSwimlane,
         onClose
     ]);
     const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
@@ -94,6 +97,8 @@ export default function AddTicketCard({ swimlaneId, swimlaneTitle, isEmptySwimla
                             handleStartDateChange={handleStartDateChange}
                             dueDate={dueDate}
                             setDueDate={setDueDate}
+                            selectedTagIds={selectedTagIds}
+                            setSelectedTagIds={setSelectedTagIds}
                         />
                     </ModalBody>
                     <ModalFooter>

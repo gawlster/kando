@@ -3,7 +3,7 @@ import { doesLoggedInUserOwnSwimlane } from "@/utils/auth"
 import { supabase } from "@/utils/supabase"
 import { NextApiRequest, NextApiResponse } from "next"
 
-export type BodyType = Omit<Database["public"]["Tables"]["ticket"]["Row"], "created_at" | "id">
+export type BodyType = Omit<Database["public"]["Tables"]["ticket"]["Row"], "created_at" | "id"> & { tagIds: number[] }
 export type ResponseType = void
 export const url = "/api/addTicket"
 
@@ -24,8 +24,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         return res.status(401).json({ error: "Unauthorized" })
     }
 
+    const { tagIds, ...ticketData } = body;
+
     try {
-        await supabase.from("ticket").insert(body)
+        const { data: newTicketId, error } = await supabase.from("ticket").insert(ticketData).select("id").single()
+        if (!newTicketId || error) {
+            return res.status(400).json({ error: error?.message || "Failed to create ticket" })
+        }
+        tagIds.forEach(async (tagId) => {
+            await supabase.from("ticketTag").insert({
+                ticketId: newTicketId.id,
+                tagId: tagId
+            })
+        })
         return res.status(200).json()
     } catch (error) {
         return res.status(400).json({ error: (error as Error).message })
@@ -38,6 +49,8 @@ function isValidBody(body: BodyType): body is BodyType {
         typeof body.description === "string" &&
         typeof body.startDate === "string" &&
         typeof body.dueDate === "string" &&
-        typeof body.swimlaneId === "number"
+        typeof body.swimlaneId === "number" &&
+        Array.isArray(body.tagIds) &&
+        body.tagIds.every(tagId => typeof tagId === "number" && tagId >= 0)
     )
 }

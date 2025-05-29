@@ -47,7 +47,7 @@ export function usePost<TBody, TData>(url: string, opts?: UsePostOptions<TData>)
         setData(json as TData | null)
         setLoading(false)
         return json as TData | null
-    }, [])
+    }, [url])
     const doPost = useCallback(async (body: TBody) => {
         try {
             const response = doPostCall(body)

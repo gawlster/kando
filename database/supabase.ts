@@ -75,20 +75,31 @@ export type Database = {
           created_at: string
           id: number
           title: string
+          userId: number | null
         }
         Insert: {
           color?: string
           created_at?: string
           id?: number
           title?: string
+          userId?: number | null
         }
         Update: {
           color?: string
           created_at?: string
           id?: number
           title?: string
+          userId?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "tag_userId_fkey"
+            columns: ["userId"]
+            isOneToOne: false
+            referencedRelation: "user"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ticket: {
         Row: {

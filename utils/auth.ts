@@ -22,7 +22,7 @@ function getUserIdFromToken(token: string) {
     try {
         const decoded = jwt.verify(token, secret as string) as { userId: number };
         return decoded.userId;
-    } catch (error) {
+    } catch (_) {
         return null;
     }
 }

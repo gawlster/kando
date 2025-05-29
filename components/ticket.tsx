@@ -33,10 +33,10 @@ import {
     url as moveTicketUrl
 } from "../pages/api/moveTicket";
 import TicketForm from "./ticket-form";
+import { type ResponseType as GetTicketsResponse } from "../pages/api/getTickets/[swimlaneId]";
+import { Unpacked } from "@/utils/typeUtils";
 
-type Ticket = Database["public"]["Tables"]["ticket"]["Row"]
-
-export default function Ticket({ details }: { details: Ticket; }) {
+export default function Ticket({ details }: { details: Unpacked<GetTicketsResponse>; }) {
     const timeoutRef = useRef<NodeJS.Timeout | null>(null)
     const didLongPress = useRef(false)
     const { refetchSwimlane } = useContext(RefetchDataFunctionsContext)
@@ -53,6 +53,7 @@ export default function Ticket({ details }: { details: Ticket; }) {
     const [editableDescription, setEditableDescription] = useState(details.description)
     const [editableStartDate, setEditableStartDate] = useState(parseDate(details.startDate))
     const [editableDueDate, setEditableDueDate] = useState(parseDate(details.dueDate))
+    const [editableSelectedTagIds, setEditableSelectedTagIds] = useState<Set<string>>(new Set(details.tagIds));
     const { isOpen: isDetailsOpen, onOpen: onDetailsOpen, onClose: onDetailsClose } = useDisclosure();
     const { isOpen: isMoveOpen, onOpen: onMoveOpen, onClose: onMoveClose } = useDisclosure();
     const handleStartPress = useCallback(() => {
@@ -88,6 +89,7 @@ export default function Ticket({ details }: { details: Ticket; }) {
             startDate: editableStartDate.toString(),
             dueDate: editableDueDate.toString(),
             swimlaneId: details.swimlaneId,
+            tagIds: Array.from(editableSelectedTagIds).map((tagId) => Number(tagId))
         })
         if (details?.swimlaneId) {
             await refetchSwimlane(details.swimlaneId)
@@ -99,6 +101,7 @@ export default function Ticket({ details }: { details: Ticket; }) {
         editableDescription,
         editableStartDate,
         editableDueDate,
+        editableSelectedTagIds,
         updateTicketPost,
         refetchSwimlane,
         onDetailsClose
@@ -154,6 +157,8 @@ export default function Ticket({ details }: { details: Ticket; }) {
                             handleStartDateChange={setEditableStartDate}
                             dueDate={editableDueDate}
                             setDueDate={setEditableDueDate}
+                            selectedTagIds={editableSelectedTagIds}
+                            setSelectedTagIds={setEditableSelectedTagIds}
                         />
                     </ModalBody>
                     <ModalFooter>
@@ -193,49 +198,3 @@ export default function Ticket({ details }: { details: Ticket; }) {
         </>
     )
 }
-
-
-//                        <Select
-//                            isMultiline
-//                            items={[]}
-//                            label="Tags"
-//                            labelPlacement="inside"
-//                            renderValue={(items) => (
-//                                <div className="flex flex-wrap gap-2">
-//                                    {items.map((item) => (
-//                                        <Chip
-//                                            key={item.key}
-//                                            classNames={{
-//                                                base: `bg-${item.data?.color}`
-//                                            }}
-//                                            onClose={() => setEditableTags((prevTags) => prevTags.filter((tag) => tag.title !== item.data?.title))}
-//                                        >{item.data?.title}</Chip>
-//                                    ))}
-//                                </div>
-//                            )}
-//                            selectionMode="multiple"
-//                            onSelectionChange={(selectedTitles) => {
-//                                if (!(selectedTitles instanceof Set)) {
-//                                    setEditableTags([])
-//                                }
-//                                const arrayTitles = Array.from(selectedTitles)
-//                                const tagsArray = []
-//                                for (const title of arrayTitles) {
-//                                    for (const tag of allTags) {
-//                                        if (tag.title === title) {
-//                                            tagsArray.push(tag)
-//                                            break
-//                                        }
-//                                    }
-//                                }
-//                                setEditableTags(tagsArray)
-//                            }}
-//                            selectedKeys={editableTags.map((tag) => tag.title)}
-//                        >
-//                            {(tag) => (
-//                                <SelectItem key={tag.title}>
-//                                    {tag.title}
-//                                </SelectItem>
-//                            )}
-//                        </Select>
-

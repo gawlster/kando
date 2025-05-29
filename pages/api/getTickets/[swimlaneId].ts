@@ -3,7 +3,9 @@ import { doesLoggedInUserOwnSwimlane } from "@/utils/auth";
 import { supabase } from "@/utils/supabase";
 import { NextApiRequest, NextApiResponse } from "next";
 
-export type ResponseType = Database["public"]["Tables"]["ticket"]["Row"][];
+export type ResponseType = (Database["public"]["Tables"]["ticket"]["Row"] & {
+    tagIds: string[];
+})[];
 export const url = "/api/getTickets";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ResponseType | { error: string }>) {
@@ -27,5 +29,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     if (!data) {
         return res.status(400).json({ error: "No data found" })
     }
-    return res.status(200).json(data)
+    const dataWithTags = await attachTagsToTickets(data);
+    return res.status(200).json(dataWithTags)
+}
+
+async function attachTagsToTickets(tickets: Database["public"]["Tables"]["ticket"]["Row"][]) {
+    return await Promise.all(tickets.map(async (ticket) => {
+        const { data: ticketTagData, error: ticketTagError } = await supabase.from("ticketTag").select("tagId").eq("ticketId", ticket.id);
+        if (!ticketTagData || ticketTagError) {
+            throw new Error(ticketTagError?.message || "No tags found for ticket");
+        }
+        const tagIds = new Set<string>();
+        ticketTagData.forEach(tag => {
+            if (tag.tagId) {
+                tagIds.add(tag.tagId.toString());
+            }
+        });
+        return {
+            ...ticket,
+            tagIds: Array.from(tagIds)
+        };
+    }));
 }

@@ -21,7 +21,7 @@ export default function AddSwimlaneButton() {
         await refetchAllSwimlanes();
         setTitle("");
         onClose();
-    }, [doPost, title]);
+    }, [doPost, refetchAllSwimlanes, title, onClose]);
     return (
         <>
             <Button onPress={onOpen}>

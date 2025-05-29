@@ -16,7 +16,7 @@ export function useFetch<TData>(url: string) {
         const json = await response.json()
         setData(json)
         setLoading(false)
-    }, [])
+    }, [url])
     useEffect(() => {
         if (hasFetchedOnLoad.current) {
             return
