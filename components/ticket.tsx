@@ -124,6 +124,22 @@ export default function Ticket({ details }: { details: Unpacked<GetTicketsRespon
         refetchSwimlane,
         onMoveClose
     ]);
+    const handleCloseDetails = useCallback(() => {
+        setEditableTitle(details.title);
+        setEditableDescription(details.description);
+        setEditableStartDate(parseDate(details.startDate));
+        setEditableDueDate(parseDate(details.dueDate));
+        setEditableSelectedTagIds(new Set(details.tagIds));
+        onDetailsClose();
+    }, [
+        details,
+        onDetailsClose,
+        setEditableTitle,
+        setEditableDescription,
+        setEditableStartDate,
+        setEditableDueDate,
+        setEditableSelectedTagIds
+    ]);
 
     return (
         <>
@@ -162,7 +178,7 @@ export default function Ticket({ details }: { details: Unpacked<GetTicketsRespon
                         />
                     </ModalBody>
                     <ModalFooter>
-                        <Button variant="ghost" onPress={onDetailsClose} disabled={updateLoading}>
+                        <Button variant="ghost" onPress={handleCloseDetails} disabled={updateLoading}>
                             Close
                         </Button>
                         <Button onPress={onDetailsSave} isLoading={updateLoading}>
