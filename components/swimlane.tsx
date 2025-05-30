@@ -5,13 +5,33 @@ import { useFetch } from "@/hooks/useFetch";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { ResponseType as GetTicketsResponse, url } from "../pages/api/getTickets/[swimlaneId]";
 import { RefetchDataFunctionsContext } from "@/pages";
-import { Listbox, ListboxItem, Popover, PopoverContent, PopoverTrigger } from "@heroui/react";
+import {
+    Button,
+    Input,
+    Listbox,
+    ListboxItem,
+    Modal,
+    ModalBody,
+    ModalContent,
+    ModalFooter,
+    ModalHeader,
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+    useDisclosure
+} from "@heroui/react";
 import { usePost } from "@/hooks/usePost";
 import {
     type BodyType as MoveSwimlaneBody,
     type ResponseType as MoveSwimlaneResponse,
     url as moveSwimlaneUrl
 } from "../pages/api/moveSwimlane";
+import {
+    type BodyType as DeleteSwimlaneBody,
+    type ResponseType as DeleteSwimlaneResponse,
+    url as deleteSwimlaneUrl
+} from "../pages/api/deleteSwimlane";
+import { useEnter } from "@/hooks/useEnter";
 
 type Swimlane = Database["public"]["Tables"]["swimlane"]["Row"]
 
@@ -90,9 +110,12 @@ function Layout({
 }
 
 function Title({ id, title }: { id: number, title: string }) {
+    const [confirmDeleteTitle, setConfirmDeleteTitle] = useState("");
+    const { isOpen: isConfirmDeleteModalOpen, onOpen: onConfirmDeleteModalOpen, onClose: onConfirmDeleteModalClose } = useDisclosure();
     const { refetchAllSwimlanes } = useContext(RefetchDataFunctionsContext);
     const [popoverOpen, setPopoverOpen] = useState(false);
     const { doPost: moveSwimlane, loading: moveSwimlaneLoading } = usePost<MoveSwimlaneBody, MoveSwimlaneResponse>(moveSwimlaneUrl);
+    const { doPost: deleteSwimlane, loading: deleteLoading } = usePost<DeleteSwimlaneBody, DeleteSwimlaneResponse>(deleteSwimlaneUrl);
     const handleListboxActions = useCallback(async (action: string) => {
         switch (action) {
             case "move-left":
@@ -102,6 +125,10 @@ function Title({ id, title }: { id: number, title: string }) {
             case "move-right":
                 await moveSwimlane({ id, direction: "right" });
                 await refetchAllSwimlanes();
+                break;
+            case "delete":
+                setConfirmDeleteTitle("");
+                onConfirmDeleteModalOpen();
                 break;
             default:
                 console.warn(`Unknown action: ${action}`);
@@ -113,20 +140,71 @@ function Title({ id, title }: { id: number, title: string }) {
         refetchAllSwimlanes,
         setPopoverOpen
     ]);
+    const handleConfirmDeleteSwimlane = useCallback(async () => {
+        await deleteSwimlane({ id });
+        await refetchAllSwimlanes();
+        onConfirmDeleteModalClose();
+    }, [
+        deleteSwimlane,
+        id,
+        refetchAllSwimlanes,
+        onConfirmDeleteModalClose
+    ]);
+    const { enable, disable } = useEnter(handleConfirmDeleteSwimlane)
+    useEffect(() => {
+        if (isConfirmDeleteModalOpen && confirmDeleteTitle === title) {
+            enable();
+        } else {
+            disable();
+        }
+    }, [
+        isConfirmDeleteModalOpen,
+        confirmDeleteTitle,
+        title,
+        enable,
+        disable
+    ]);
     return (
-        <Popover placement="bottom-start" isOpen={popoverOpen} onOpenChange={setPopoverOpen}>
-            <PopoverTrigger>
-                <span className="cursor-pointer">{title}</span>
-            </PopoverTrigger>
-            <PopoverContent>
-                <div>
-                    <Listbox aria-label="Swimlane Actions" onAction={(action) => handleListboxActions(action as string)}>
-                        <ListboxItem key="move-left">Move swimlane left</ListboxItem>
-                        <ListboxItem key="move-right">Move swimlane right</ListboxItem>
-                    </Listbox>
-                </div>
-            </PopoverContent>
-        </Popover>
+        <>
+            <Popover placement="bottom-start" isOpen={popoverOpen} onOpenChange={setPopoverOpen}>
+                <PopoverTrigger>
+                    <span className="cursor-pointer">{title}</span>
+                </PopoverTrigger>
+                <PopoverContent>
+                    <div>
+                        <Listbox aria-label="Swimlane Actions" onAction={(action) => handleListboxActions(action as string)}>
+                            <ListboxItem key="move-left">Move swimlane left</ListboxItem>
+                            <ListboxItem key="move-right">Move swimlane right</ListboxItem>
+                            <ListboxItem key="delete">Delete swimlane</ListboxItem>
+                        </Listbox>
+                    </div>
+                </PopoverContent>
+            </Popover>
+            <Modal isOpen={isConfirmDeleteModalOpen} onClose={onConfirmDeleteModalClose} isDismissable={false}>
+                <ModalContent>
+                    <ModalHeader>Confirm Delete</ModalHeader>
+                    <ModalBody>
+                        <p>Warning: This will also delete all tickets currently in the swimlane. This action cannot be undone.</p>
+                        <p>Enter the swimlane's title "{title}" to continue.</p>
+                        <Input
+                            label="Title"
+                            labelPlacement="inside"
+                            name="title"
+                            value={confirmDeleteTitle}
+                            onValueChange={setConfirmDeleteTitle}
+                        />
+                    </ModalBody>
+                    <ModalFooter>
+                        <Button variant="ghost" onPress={onConfirmDeleteModalClose} disabled={deleteLoading}>
+                            Cancel
+                        </Button>
+                        <Button onPress={handleConfirmDeleteSwimlane} isLoading={deleteLoading} isDisabled={confirmDeleteTitle !== title}>
+                            {deleteLoading ? "Loading..." : "Add"}
+                        </Button>
+                    </ModalFooter>
+                </ModalContent>
+            </Modal>
+        </>
     )
 }
 
