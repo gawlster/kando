@@ -12,6 +12,7 @@ import {
     url as registerPostUrl
 } from "../pages/api/register";
 import { AuthContext } from "@/pages";
+import { useEnter } from "@/hooks/useEnter";
 
 export function LoggedOut() {
     const [visibleForm, setVisibleForm] = useState<"login" | "register">("login")
@@ -63,6 +64,7 @@ function RegisterForm({ switchToLogin }: { switchToLogin: () => void }) {
         })
         refetchAuthCookie()
     }, [username, password, confirmPassword, doRegister, refetchAuthCookie])
+    useEnter(handleSubmitPress);
     return (
         <>
             <Input
@@ -115,6 +117,7 @@ function LoginForm({ switchToRegister }: { switchToRegister: () => void }) {
         })
         refetchAuthCookie()
     }, [username, password, doLogin, refetchAuthCookie])
+    useEnter(handleSubmitPress);
     return (
         <>
             <Input

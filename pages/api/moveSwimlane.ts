@@ -39,7 +39,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             if (!leftSwimlanes || leftSwimlanesError) {
                 return res.status(400).json({ error: leftSwimlanesError?.message || "Failed to fetch swimlanes" })
             }
-            if (leftSwimlanes.length == 0) {
+            if (leftSwimlanes.length === 0) {
                 // No swimlanes to the left, do nothing
             } else if (leftSwimlanes.length === 1) {
                 const otherOrder = leftSwimlanes[0].sortOrder;
@@ -68,7 +68,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             if (!rightSwimlanes || rightSwimlanesError) {
                 return res.status(400).json({ error: rightSwimlanesError?.message || "Failed to fetch swimlanes" })
             }
-            if (rightSwimlanes.length == 0) {
+            if (rightSwimlanes.length === 0) {
                 // No swimlanes to the right, do nothing
             } else if (rightSwimlanes.length === 1) {
                 const otherOrder = rightSwimlanes[0].sortOrder;

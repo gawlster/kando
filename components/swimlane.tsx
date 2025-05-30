@@ -23,7 +23,12 @@ export default function Swimlane({ details }: { details: Swimlane }) {
         title: details.title,
         gradientColorStart: details.gradientColorStart,
         gradientColorEnd: details.gradientColorEnd
-    }), [details.title, details.gradientColorStart, details.gradientColorEnd])
+    }), [
+        details.id,
+        details.title,
+        details.gradientColorStart,
+        details.gradientColorEnd
+    ])
 
     useEffect(() => {
         registerRefetchFunction(details.id, refetch);
@@ -105,7 +110,8 @@ function Title({ id, title }: { id: number, title: string }) {
     }, [
         id,
         moveSwimlane,
-        setPopoverOpen,
+        refetchAllSwimlanes,
+        setPopoverOpen
     ]);
     return (
         <Popover placement="bottom-start" isOpen={popoverOpen} onOpenChange={setPopoverOpen}>

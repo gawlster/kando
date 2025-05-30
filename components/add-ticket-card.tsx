@@ -14,6 +14,7 @@ import {
 import { getLocalTimeZone, today, parseDate, CalendarDate } from "@internationalized/date";
 import {
     useCallback,
+    useEffect,
     useState,
 } from "react";
 import { useContext } from "react";
@@ -23,6 +24,7 @@ import {
     url as addCardUrl
 } from "../pages/api/addTicket";
 import TicketForm from "./ticket-form";
+import { useEnter } from "@/hooks/useEnter";
 
 export default function AddTicketCard({ swimlaneId, swimlaneTitle, isEmptySwimlane }: { swimlaneId: number, swimlaneTitle: string, isEmptySwimlane?: boolean }) {
     const { refetchSwimlane } = useContext(RefetchDataFunctionsContext)
@@ -68,12 +70,14 @@ export default function AddTicketCard({ swimlaneId, swimlaneTitle, isEmptySwimla
         refetchSwimlane,
         onClose
     ]);
-    const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-        if (e.key === "Enter") {
-            e.preventDefault()
-            handleSubmit()
+    const { enable, disable } = useEnter(handleSubmit);
+    useEffect(() => {
+        if (isOpen) {
+            enable();
+        } else {
+            disable();
         }
-    }, [handleSubmit])
+    }, [isOpen, enable, disable]);
     return (
         <>
             <Card
@@ -84,7 +88,7 @@ export default function AddTicketCard({ swimlaneId, swimlaneTitle, isEmptySwimla
                     <span>Add card</span>
                 </CardBody>
             </Card>
-            <Modal isOpen={isOpen} onClose={onClose} onKeyDown={handleKeyDown}>
+            <Modal isOpen={isOpen} onClose={onClose}>
                 <ModalContent>
                     <ModalHeader>Add Ticket to {swimlaneTitle}</ModalHeader>
                     <ModalBody>

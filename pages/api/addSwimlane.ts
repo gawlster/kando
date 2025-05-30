@@ -3,7 +3,7 @@ import { getLoggedInUser } from "@/utils/auth"
 import { supabase } from "@/utils/supabase"
 import { NextApiRequest, NextApiResponse } from "next"
 
-export type BodyType = Omit<Database["public"]["Tables"]["swimlane"]["Row"], "created_at" | "id" | "userId" | "gradientColorStart" | "gradientColorEnd">
+export type BodyType = Omit<Database["public"]["Tables"]["swimlane"]["Row"], "created_at" | "id" | "userId" | "gradientColorStart" | "gradientColorEnd" | "sortOrder">
 export type ResponseType = void
 export const url = "/api/addSwimlane"
 

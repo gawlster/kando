@@ -18,6 +18,7 @@ import { parseDate } from "@internationalized/date";
 import {
     Key,
     useCallback,
+    useEffect,
     useRef,
     useState,
 } from "react";
@@ -35,6 +36,7 @@ import {
 import TicketForm from "./ticket-form";
 import { type ResponseType as GetTicketsResponse } from "../pages/api/getTickets/[swimlaneId]";
 import { Unpacked } from "@/utils/typeUtils";
+import { useEnter } from "@/hooks/useEnter";
 
 export default function Ticket({ details }: { details: Unpacked<GetTicketsResponse>; }) {
     const timeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -140,7 +142,14 @@ export default function Ticket({ details }: { details: Unpacked<GetTicketsRespon
         setEditableDueDate,
         setEditableSelectedTagIds
     ]);
-
+    const { enable, disable } = useEnter(onDetailsSave);
+    useEffect(() => {
+        if (isDetailsOpen) {
+            enable();
+        } else {
+            disable();
+        }
+    }, [isDetailsOpen, enable, disable]);
     return (
         <>
             <Card
