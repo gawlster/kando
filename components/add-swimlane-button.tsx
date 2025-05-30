@@ -8,6 +8,7 @@ import {
     url
 } from "../pages/api/addSwimlane";
 import { RefetchDataFunctionsContext } from "@/pages";
+import { useEnter } from "@/hooks/useEnter";
 
 export default function AddSwimlaneButton() {
     const { refetchAllSwimlanes } = useContext(RefetchDataFunctionsContext);
@@ -22,6 +23,7 @@ export default function AddSwimlaneButton() {
         setTitle("");
         onClose();
     }, [doPost, refetchAllSwimlanes, title, onClose]);
+    useEnter(handleSubmit, isOpen);
     return (
         <>
             <Button onPress={onOpen}>

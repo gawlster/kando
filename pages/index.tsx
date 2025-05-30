@@ -50,7 +50,6 @@ export default function IndexPage() {
     )
 }
 
-
 export const AvailableSwimlanesContext = createContext<{ swimlanes: { id: number, title: string }[] }>({ swimlanes: [] })
 type RefetchDataFunctionsContextType = {
     refetchAllSwimlanes: () => Promise<void>,
