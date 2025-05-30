@@ -41,6 +41,7 @@ import { useEnter } from "@/hooks/useEnter";
 export default function Ticket({ details }: { details: Unpacked<GetTicketsResponse>; }) {
     const timeoutRef = useRef<NodeJS.Timeout | null>(null)
     const didLongPress = useRef(false)
+    const didCancelPress = useRef(false)
     const { refetchSwimlane } = useContext(RefetchDataFunctionsContext)
     const {
         doPost: updateTicketPost,
@@ -59,12 +60,14 @@ export default function Ticket({ details }: { details: Unpacked<GetTicketsRespon
     const { isOpen: isDetailsOpen, onOpen: onDetailsOpen, onClose: onDetailsClose } = useDisclosure();
     const { isOpen: isMoveOpen, onOpen: onMoveOpen, onClose: onMoveClose } = useDisclosure();
     const handleStartPress = useCallback(() => {
+        didCancelPress.current = false
         timeoutRef.current = setTimeout(() => {
             didLongPress.current = true
             onMoveOpen()
         }, 500)
     }, [onMoveOpen])
     const handleCancelPress = useCallback(() => {
+        didCancelPress.current = true
         if (timeoutRef.current) {
             clearTimeout(timeoutRef.current)
             timeoutRef.current = null
@@ -76,8 +79,9 @@ export default function Ticket({ details }: { details: Unpacked<GetTicketsRespon
         return false
     }, [])
     const handleEndPress = useCallback(() => {
+        const cancelled = didCancelPress.current
         const didLongPress = handleCancelPress()
-        if (didLongPress) {
+        if (didLongPress || cancelled) {
             return
         }
         onDetailsOpen()
@@ -163,6 +167,7 @@ export default function Ticket({ details }: { details: Unpacked<GetTicketsRespon
                 onTouchEnd={handleEndPress}
                 onMouseLeave={handleCancelPress}
                 onTouchCancel={handleCancelPress}
+                onTouchMove={handleCancelPress}
             >
                 <CardBody className="h-full justify-center">
                     <span className="font-semibold">{details.title}</span>
