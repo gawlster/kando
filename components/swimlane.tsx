@@ -138,7 +138,8 @@ function Title({ id, title }: { id: number, title: string }) {
         id,
         moveSwimlane,
         refetchAllSwimlanes,
-        setPopoverOpen
+        setPopoverOpen,
+        onConfirmDeleteModalOpen
     ]);
     const handleConfirmDeleteSwimlane = useCallback(async () => {
         await deleteSwimlane({ id });
@@ -155,7 +156,7 @@ function Title({ id, title }: { id: number, title: string }) {
         <>
             <Popover placement="bottom-start" isOpen={popoverOpen} onOpenChange={setPopoverOpen}>
                 <PopoverTrigger>
-                    <span className="cursor-pointer">⌄{title}</span>
+                    <span className="cursor-pointer">▼ {title}</span>
                 </PopoverTrigger>
                 <PopoverContent>
                     <div>
@@ -172,7 +173,7 @@ function Title({ id, title }: { id: number, title: string }) {
                     <ModalHeader>Confirm Delete</ModalHeader>
                     <ModalBody>
                         <p>Warning: This will also delete all tickets currently in the swimlane. This action cannot be undone.</p>
-                        <p>Enter the swimlane's title "{title}" to continue.</p>
+                        <p>Enter the swimlane{"'"}s title {'"'}{title}{'"'} to continue.</p>
                         <Input
                             label="Title"
                             labelPlacement="inside"
@@ -185,7 +186,7 @@ function Title({ id, title }: { id: number, title: string }) {
                         <Button variant="ghost" onPress={onConfirmDeleteModalClose} disabled={deleteLoading}>
                             Cancel
                         </Button>
-                        <Button onPress={handleConfirmDeleteSwimlane} isLoading={deleteLoading} isDisabled={confirmDeleteTitle !== title}>
+                        <Button onPress={handleConfirmDeleteSwimlane} isLoading={deleteLoading} isDisabled={confirmDeleteTitle !== title} color="danger">
                             {deleteLoading ? "Loading..." : "Add"}
                         </Button>
                     </ModalFooter>
