@@ -40,6 +40,7 @@ export type Database = {
           gradientColorEnd: string
           gradientColorStart: string
           id: number
+          sortOrder: number
           title: string
           userId: number | null
         }
@@ -48,6 +49,7 @@ export type Database = {
           gradientColorEnd?: string
           gradientColorStart?: string
           id?: number
+          sortOrder?: number
           title?: string
           userId?: number | null
         }
@@ -56,6 +58,7 @@ export type Database = {
           gradientColorEnd?: string
           gradientColorStart?: string
           id?: number
+          sortOrder?: number
           title?: string
           userId?: number | null
         }

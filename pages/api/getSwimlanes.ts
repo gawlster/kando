@@ -17,7 +17,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         return res.status(401).json({ error: "Unauthorized" })
     }
 
-    const { data, error } = await supabase.from("swimlane").select("*").eq("userId", user.id)
+    const { data, error } = await supabase.from("swimlane").select("*").eq("userId", user.id).order("sortOrder", { ascending: true });
     if (error) {
         return res.status(400).json({ error: error.message })
     }

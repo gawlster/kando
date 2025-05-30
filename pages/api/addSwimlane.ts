@@ -39,15 +39,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         return res.status(401).json({ error: "Unauthorized" })
     }
 
-    const existingSwimlanes = await supabase.from("swimlane").select("id").eq("userId", user.id)
-    const numSwimlanes = existingSwimlanes.data?.length ?? 0
+    const { data: existingSwimlanes, error } = await supabase.from("swimlane").select("sortOrder").eq("userId", user.id).order("sortOrder", { ascending: true })
+    if (!existingSwimlanes || error) {
+        return res.status(400).json({ error: error?.message || "Failed to fetch existing swimlanes" })
+    }
+    const numSwimlanes = existingSwimlanes.length ?? 0
     const gradient = swimlaneColors[numSwimlanes % swimlaneColors.length]
+    const latestOrder = existingSwimlanes.length > 0 ? existingSwimlanes[existingSwimlanes.length - 1].sortOrder : 0
+    const newOrder = latestOrder + 10
 
     try {
         await supabase.from("swimlane").insert({
             title: body.title,
             ...gradient,
             userId: user.id,
+            sortOrder: newOrder
         })
         return res.status(200).json()
     } catch (error) {
