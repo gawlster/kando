@@ -150,25 +150,12 @@ function Title({ id, title }: { id: number, title: string }) {
         refetchAllSwimlanes,
         onConfirmDeleteModalClose
     ]);
-    const { enable, disable } = useEnter(handleConfirmDeleteSwimlane)
-    useEffect(() => {
-        if (isConfirmDeleteModalOpen && confirmDeleteTitle === title) {
-            enable();
-        } else {
-            disable();
-        }
-    }, [
-        isConfirmDeleteModalOpen,
-        confirmDeleteTitle,
-        title,
-        enable,
-        disable
-    ]);
+    useEnter(handleConfirmDeleteSwimlane, isConfirmDeleteModalOpen && confirmDeleteTitle === title);
     return (
         <>
             <Popover placement="bottom-start" isOpen={popoverOpen} onOpenChange={setPopoverOpen}>
                 <PopoverTrigger>
-                    <span className="cursor-pointer">{title}</span>
+                    <span className="cursor-pointer">⌄{title}</span>
                 </PopoverTrigger>
                 <PopoverContent>
                     <div>

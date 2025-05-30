@@ -146,14 +146,7 @@ export default function Ticket({ details }: { details: Unpacked<GetTicketsRespon
         setEditableDueDate,
         setEditableSelectedTagIds
     ]);
-    const { enable, disable } = useEnter(onDetailsSave);
-    useEffect(() => {
-        if (isDetailsOpen) {
-            enable();
-        } else {
-            disable();
-        }
-    }, [isDetailsOpen, enable, disable]);
+    useEnter(onDetailsSave, isDetailsOpen);
     return (
         <>
             <Card

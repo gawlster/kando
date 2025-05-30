@@ -70,14 +70,7 @@ export default function AddTicketCard({ swimlaneId, swimlaneTitle, isEmptySwimla
         refetchSwimlane,
         onClose
     ]);
-    const { enable, disable } = useEnter(handleSubmit);
-    useEffect(() => {
-        if (isOpen) {
-            enable();
-        } else {
-            disable();
-        }
-    }, [isOpen, enable, disable]);
+    useEnter(handleSubmit, isOpen);
     return (
         <>
             <Card
