@@ -28,6 +28,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const doesUserOwnOriginalSwimlane = await doesLoggedInUserOwnSwimlane(req, ticketData.swimlaneId)
     const doesUserOwnDestinationSwimlane = await doesLoggedInUserOwnSwimlane(req, body.newSwimlaneId || -1)
     if (!doesUserOwnOriginalSwimlane || !doesUserOwnDestinationSwimlane) {
+        res.setHeader("Set-Cookie", "auth=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax")
         return res.status(401).json({ error: "Unauthorized" })
     }
 

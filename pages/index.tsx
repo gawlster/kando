@@ -5,6 +5,8 @@ import { type ResponseType as GetSwimlanesResponse, url } from "./api/getSwimlan
 import React, { createContext, useCallback, useEffect, useState } from "react";
 import { Toaster } from "react-hot-toast";
 import { LoggedOut } from "@/components/auth-forms";
+import { type ParamsType as GetTicketsParams } from "./api/getTickets/[swimlaneId]";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
 
 export const AuthContext = createContext<{
     authCookie: string | null,
@@ -53,8 +55,8 @@ export default function IndexPage() {
 export const AvailableSwimlanesContext = createContext<{ swimlanes: { id: number, title: string }[] }>({ swimlanes: [] })
 type RefetchDataFunctionsContextType = {
     refetchAllSwimlanes: () => Promise<void>,
-    registerRefetchFunction: (swimlaneId: number, refetchFunction: () => Promise<void>) => void,
-    refetchSwimlane: (swimlaneId: number) => Promise<void>
+    registerRefetchFunction: (swimlaneId: number, refetchFunction: (params: GetTicketsParams) => Promise<void>) => void,
+    refetchSwimlane: (swimlaneId: number, params: GetTicketsParams) => Promise<void>
 }
 export const RefetchDataFunctionsContext = createContext<RefetchDataFunctionsContextType>({
     refetchAllSwimlanes: async () => { },
@@ -62,17 +64,25 @@ export const RefetchDataFunctionsContext = createContext<RefetchDataFunctionsCon
     refetchSwimlane: async () => { }
 })
 
+export const TagFiltersContext = createContext<[
+    tagFilters: string,
+    setTagFilters: React.Dispatch<React.SetStateAction<string>>
+]>([
+    "",
+    () => { }
+])
+
 function LoggedIn() {
     const { data: swimlanes, loading, refetch } = useFetch<GetSwimlanesResponse>(url)
     const [refetchDataFunctions, setRefetchDataFunctions] = useState<{
         refetchAllSwimlanes: () => Promise<void>,
-        swimlanes: Record<number, () => Promise<void>>
+        swimlanes: Record<number, (params: GetTicketsParams) => Promise<void>>
     }>({
         refetchAllSwimlanes: refetch,
         swimlanes: {}
     })
 
-    const registerRefetchFunction = useCallback((swimlaneId: number, refetchFunction: () => Promise<void>) => {
+    const registerRefetchFunction = useCallback((swimlaneId: number, refetchFunction: (params: GetTicketsParams) => Promise<void>) => {
         setRefetchDataFunctions(prev => ({
             ...prev,
             swimlanes: {
@@ -82,33 +92,43 @@ function LoggedIn() {
         }))
     }, [setRefetchDataFunctions]);
 
-    const refetchSwimlane = useCallback(async (swimlaneId: number) => {
+    const refetchSwimlane = useCallback(async (swimlaneId: number, params: GetTicketsParams) => {
         if (swimlaneId in refetchDataFunctions.swimlanes) {
             const refetchFunction = refetchDataFunctions.swimlanes[swimlaneId];
-            await refetchFunction();
+            await refetchFunction(params);
         } else {
             console.warn(`No refetch function registered for swimlane ID ${swimlaneId}`);
         }
     }, [refetchDataFunctions]);
 
+    const tagFiltersState = useLocalStorage("tagFilters");
+
     if (loading || !swimlanes) {
         return (
-            <ContextProviders swimlanes={[]} refetchDataFunctionsState={{
-                refetchAllSwimlanes: refetch,
-                registerRefetchFunction,
-                refetchSwimlane
-            }}>
+            <ContextProviders
+                swimlanes={[]}
+                refetchDataFunctionsState={{
+                    refetchAllSwimlanes: refetch,
+                    registerRefetchFunction,
+                    refetchSwimlane
+                }}
+                tagFiltersState={tagFiltersState}
+            >
                 <Layout></Layout>
             </ContextProviders>
         )
     }
 
     return (
-        <ContextProviders swimlanes={swimlanes} refetchDataFunctionsState={{
-            refetchAllSwimlanes: refetch,
-            registerRefetchFunction,
-            refetchSwimlane
-        }}>
+        <ContextProviders
+            swimlanes={swimlanes}
+            refetchDataFunctionsState={{
+                refetchAllSwimlanes: refetch,
+                registerRefetchFunction,
+                refetchSwimlane
+            }}
+            tagFiltersState={tagFiltersState}
+        >
             <Layout>
                 {swimlanes.map((swimlane) => (
                     <Swimlane key={swimlane.id} details={swimlane} />
@@ -128,15 +148,18 @@ function Layout({ children }: { children?: React.ReactNode }) {
     )
 }
 
-function ContextProviders({ children, swimlanes, refetchDataFunctionsState }: {
+function ContextProviders({ children, swimlanes, refetchDataFunctionsState, tagFiltersState }: {
     children: React.ReactNode;
     swimlanes: { id: number, title: string }[];
     refetchDataFunctionsState: RefetchDataFunctionsContextType;
+    tagFiltersState: [string, React.Dispatch<React.SetStateAction<string>>];
 }) {
     return (
         <AvailableSwimlanesContext.Provider value={{ swimlanes: swimlanes }}>
             <RefetchDataFunctionsContext.Provider value={refetchDataFunctionsState}>
-                {children}
+                <TagFiltersContext.Provider value={tagFiltersState}>
+                    {children}
+                </TagFiltersContext.Provider>
             </RefetchDataFunctionsContext.Provider>
         </AvailableSwimlanesContext.Provider>
     )

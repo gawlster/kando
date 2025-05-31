@@ -3,6 +3,9 @@ import { doesLoggedInUserOwnSwimlane } from "@/utils/auth";
 import { supabase } from "@/utils/supabase";
 import { NextApiRequest, NextApiResponse } from "next";
 
+export type ParamsType = {
+    tagFilters?: string;
+}
 export type ResponseType = (Database["public"]["Tables"]["ticket"]["Row"] & {
     tagIds: string[];
 })[];
@@ -12,13 +15,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     if (req.method !== "GET") {
         return res.status(405).json({ error: "Method not allowed" });
     }
-    const { swimlaneId } = req.query;
+    const { swimlaneId, tagFilters } = req.query;
     if (!swimlaneId || typeof swimlaneId !== "string" || isNaN(Number(swimlaneId))) {
         return res.status(400).json({ error: "No swimlaneId in query params" });
     }
 
     const doesUserOwnSwimlane = await doesLoggedInUserOwnSwimlane(req, Number(swimlaneId));
     if (!doesUserOwnSwimlane) {
+        res.setHeader("Set-Cookie", "auth=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax")
         return res.status(401).json({ error: "Unauthorized" });
     }
 
@@ -30,6 +34,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         return res.status(400).json({ error: "No data found" })
     }
     const dataWithTags = await attachTagsToTickets(data);
+    if (tagFilters) {
+        const filters = (tagFilters as string).split(",").map(tag => tag.trim());
+        const filteredData = dataWithTags.filter(ticket => {
+            if (!ticket.tagIds || ticket.tagIds.length === 0) return false;
+            return ticket.tagIds.some(tagId => filters.includes(tagId));
+        });
+        return res.status(200).json(filteredData);
+    }
     return res.status(200).json(dataWithTags)
 }
 

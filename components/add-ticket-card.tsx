@@ -1,5 +1,5 @@
 import { usePost } from "@/hooks/usePost";
-import { RefetchDataFunctionsContext } from "@/pages";
+import { RefetchDataFunctionsContext, TagFiltersContext } from "@/pages";
 import {
     Button,
     Card,
@@ -33,6 +33,7 @@ export default function AddTicketCard({ swimlaneId, swimlaneTitle, isEmptySwimla
         loading: addLoading,
         error: addError
     } = usePost<AddCardBody, AddCardResponse>(addCardUrl)
+    const [tagFilters, _] = useContext(TagFiltersContext);
     const { isOpen, onOpen, onClose } = useDisclosure();
     const [title, setTitle] = useState("")
     const [description, setDescription] = useState("");
@@ -57,7 +58,7 @@ export default function AddTicketCard({ swimlaneId, swimlaneTitle, isEmptySwimla
             swimlaneId,
             tagIds: Array.from(selectedTagIds).map((tagId) => Number(tagId))
         })
-        await refetchSwimlane(swimlaneId);
+        await refetchSwimlane(swimlaneId, { tagFilters });
         onClose();
     }, [
         addTicket,
@@ -68,7 +69,8 @@ export default function AddTicketCard({ swimlaneId, swimlaneTitle, isEmptySwimla
         swimlaneId,
         selectedTagIds,
         refetchSwimlane,
-        onClose
+        onClose,
+        tagFilters
     ]);
     useEnter(handleSubmit, isOpen);
     return (

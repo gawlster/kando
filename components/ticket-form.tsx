@@ -152,9 +152,7 @@ function TagSelect({ selectedTagIds, setSelectedTagIds }: { selectedTagIds: Set<
                         {selectedTagList.map((tag) => (
                             <Chip
                                 key={tag.id}
-                                classNames={{
-                                    base: `bg-${tag.color}`
-                                }}
+                                style={{ backgroundColor: tag.color }}
                                 onClose={() => {
                                     const newSelectedIds = new Set(selectedTagIds);
                                     newSelectedIds.delete(`${tag.id}`);

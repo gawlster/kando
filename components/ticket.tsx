@@ -1,6 +1,6 @@
 import { Database } from "@/database/supabase";
 import { usePost } from "@/hooks/usePost";
-import { AvailableSwimlanesContext, RefetchDataFunctionsContext } from "@/pages";
+import { AvailableSwimlanesContext, RefetchDataFunctionsContext, TagFiltersContext } from "@/pages";
 import {
     Button,
     Card,
@@ -13,6 +13,7 @@ import {
     Listbox,
     ListboxItem,
     useDisclosure,
+    Chip
 } from "@heroui/react";
 import { parseDate } from "@internationalized/date";
 import {
@@ -37,11 +38,18 @@ import TicketForm from "./ticket-form";
 import { type ResponseType as GetTicketsResponse } from "../pages/api/getTickets/[swimlaneId]";
 import { Unpacked } from "@/utils/typeUtils";
 import { useEnter } from "@/hooks/useEnter";
+import { useFetch } from "@/hooks/useFetch";
+import {
+    type ResponseType as GetAllUserTagsResponse,
+    url as getAllUserTagsUrl
+} from "../pages/api/getAllUserTags";
 
 export default function Ticket({ details }: { details: Unpacked<GetTicketsResponse>; }) {
+    const { data: allUserTags } = useFetch<GetAllUserTagsResponse>(getAllUserTagsUrl)
     const timeoutRef = useRef<NodeJS.Timeout | null>(null)
     const didLongPress = useRef(false)
     const didCancelPress = useRef(false)
+    const [tagFilters, _] = useContext(TagFiltersContext);
     const { refetchSwimlane } = useContext(RefetchDataFunctionsContext)
     const {
         doPost: updateTicketPost,
@@ -98,7 +106,7 @@ export default function Ticket({ details }: { details: Unpacked<GetTicketsRespon
             tagIds: Array.from(editableSelectedTagIds).map((tagId) => Number(tagId))
         })
         if (details?.swimlaneId) {
-            await refetchSwimlane(details.swimlaneId)
+            await refetchSwimlane(details.swimlaneId, { tagFilters });
         }
         onDetailsClose();
     }, [
@@ -118,10 +126,10 @@ export default function Ticket({ details }: { details: Unpacked<GetTicketsRespon
             newSwimlaneId: Number(action)
         })
         if (details?.swimlaneId) {
-            await refetchSwimlane(details.swimlaneId)
+            await refetchSwimlane(details.swimlaneId, { tagFilters });
         }
         if (!isNaN(Number(action))) {
-            await refetchSwimlane(Number(action));
+            await refetchSwimlane(Number(action), { tagFilters });
         }
         onMoveClose();
     }, [
@@ -150,7 +158,7 @@ export default function Ticket({ details }: { details: Unpacked<GetTicketsRespon
     return (
         <>
             <Card
-                className="w-64 bg-background/70 h-20 min-h-20"
+                className="w-64 bg-background/70 min-h-20"
                 isPressable
                 isBlurred
                 style={{ boxShadow: '0 4px 8px rgba(0, 0, 0, 0.45)' }}
@@ -162,9 +170,30 @@ export default function Ticket({ details }: { details: Unpacked<GetTicketsRespon
                 onTouchCancel={handleCancelPress}
                 onTouchMove={handleCancelPress}
             >
-                <CardBody className="h-full justify-center">
+                <CardBody className="h-full justify-center w-full">
                     <span className="font-semibold">{details.title}</span>
-                    <span>Card body: TODO</span>
+                    <div className="text-sm text-gray-400">
+                        {details.startDate} - {details.dueDate}
+                    </div>
+                    <div className="flex flex-wrap gap-1 w-full mt-2">
+                        {details.tagIds.map((tagId) => (
+                            <>
+                                {allUserTags?.map((tag) => {
+                                    if (`${tag.id}` === tagId) {
+                                        return (
+                                            <Chip
+                                                key={tagId}
+                                                style={{ backgroundColor: tag.color }}
+                                                radius="sm"
+                                            >
+                                                {tag.title}
+                                            </Chip>
+                                        )
+                                    }
+                                })}
+                            </>
+                        ))}
+                    </div>
                 </CardBody>
             </Card>
             <Modal isOpen={isDetailsOpen} onClose={onDetailsClose} isDismissable={!updateLoading}>

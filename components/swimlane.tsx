@@ -1,10 +1,14 @@
 import { Database } from "@/database/supabase";
 import Ticket from "./ticket"
 import AddTicketCard, { DisabledAddTicketCard } from "./add-ticket-card"
-import { useFetch } from "@/hooks/useFetch";
+import { useFetch, useFetchWithQueryParams } from "@/hooks/useFetch";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { ResponseType as GetTicketsResponse, url } from "../pages/api/getTickets/[swimlaneId]";
-import { RefetchDataFunctionsContext } from "@/pages";
+import {
+    ResponseType as GetTicketsResponse,
+    ParamsType as GetTicketsParams,
+    url
+} from "../pages/api/getTickets/[swimlaneId]";
+import { RefetchDataFunctionsContext, TagFiltersContext } from "@/pages";
 import {
     Button,
     Input,
@@ -37,7 +41,11 @@ type Swimlane = Database["public"]["Tables"]["swimlane"]["Row"]
 
 export default function Swimlane({ details }: { details: Swimlane }) {
     const { registerRefetchFunction } = useContext(RefetchDataFunctionsContext)
-    const { data: tickets, loading, refetch } = useFetch<GetTicketsResponse>(`${url}/${details.id}`)
+    const [tagFilters, _] = useContext(TagFiltersContext);
+    const getTicketsParams = useMemo(() => ({
+        tagFilters: tagFilters
+    }), [tagFilters]);
+    const { data: tickets, loading, refetch } = useFetchWithQueryParams<GetTicketsParams, GetTicketsResponse>(`${url}/${details.id}`, getTicketsParams);
     const layoutProps = useMemo(() => ({
         id: details.id,
         title: details.title,
@@ -49,6 +57,10 @@ export default function Swimlane({ details }: { details: Swimlane }) {
         details.gradientColorStart,
         details.gradientColorEnd
     ])
+
+    useEffect(() => {
+        refetch(getTicketsParams);
+    }, [getTicketsParams, refetch]);
 
     useEffect(() => {
         registerRefetchFunction(details.id, refetch);

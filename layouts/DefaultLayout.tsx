@@ -1,6 +1,7 @@
 import LogoutButton from "@/components/logout-button";
 import { Head } from "./head";
 import AddSwimlaneButton from "@/components/add-swimlane-button";
+import FilterTicketsPopover from "@/components/filter-tickets-popover";
 
 export default function DefaultLayout({
     children,
@@ -19,6 +20,7 @@ export default function DefaultLayout({
                 </span>
                 <LogoutButton />
                 <AddSwimlaneButton />
+                <FilterTicketsPopover />
             </div>
             <main className="h-full p-4 w-full overflow-x-auto">{children}</main>
         </div>
