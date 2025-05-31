@@ -118,7 +118,8 @@ export default function Ticket({ details }: { details: Unpacked<GetTicketsRespon
         editableSelectedTagIds,
         updateTicketPost,
         refetchSwimlane,
-        onDetailsClose
+        onDetailsClose,
+        tagFilters
     ])
     const onMoveAction = useCallback(async (action: Key) => {
         await moveTicketPost({
@@ -136,7 +137,8 @@ export default function Ticket({ details }: { details: Unpacked<GetTicketsRespon
         details,
         moveTicketPost,
         refetchSwimlane,
-        onMoveClose
+        onMoveClose,
+        tagFilters
     ]);
     const handleCloseDetails = useCallback(() => {
         setEditableTitle(details.title);
