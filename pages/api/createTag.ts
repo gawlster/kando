@@ -4,8 +4,8 @@ import { supabase } from "@/utils/supabase"
 import { NextApiRequest, NextApiResponse } from "next"
 
 export type BodyType = Omit<Database["public"]["Tables"]["tag"]["Row"], "created_at" | "id" | "userId" | "color">
-export type ResponseType = void
-export const url = "/api/addTag"
+export type ResponseType = {}
+export const url = "/api/reateTag"
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ResponseType | { error: string }>) {
     if (req.method !== "POST") {
@@ -31,7 +31,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             userId: user.id,
             color: "#808080"
         })
-        return res.status(200).json()
+        return res.status(200).json({})
     } catch (error) {
         return res.status(400).json({ error: (error as Error).message })
     }

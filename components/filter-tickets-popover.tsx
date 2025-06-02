@@ -1,17 +1,13 @@
-import { useFetch } from "@/hooks/useFetch";
 import { Button } from "@heroui/button";
 import { Checkbox, CheckboxGroup, Popover, PopoverContent, PopoverTrigger } from "@heroui/react";
-import { useContext, useState } from "react";
-import {
-    type ResponseType as AllUserTagsResponse,
-    url as alUserTagsUrl
-} from "../pages/api/getAllUserTags";
-import { TagFiltersContext } from "@/pages";
+import { useState } from "react";
+import { useAllUserTags } from "@/data/tags";
+import { useTagFilters } from "@/hooks/useTagFilters";
 
 export default function FilterTicketsPopover() {
-    const [tagFilters, setTagFilters] = useContext(TagFiltersContext);
+    const { data: allUserTags } = useAllUserTags();
+    const { tagFilters, setTagFilters } = useTagFilters();
     const [popoverOpen, setPopoverOpen] = useState(false);
-    const { data: allUserTags } = useFetch<AllUserTagsResponse>(alUserTagsUrl)
     return (
         <Popover placement="bottom-start" isOpen={popoverOpen} onOpenChange={setPopoverOpen}>
             <PopoverTrigger>

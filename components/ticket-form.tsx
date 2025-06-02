@@ -1,4 +1,4 @@
-import { useFetch } from "@/hooks/useFetch";
+import { useAllUserTags, useCreateTag } from "@/data/tags";
 import {
     Input,
     DatePicker,
@@ -16,14 +16,7 @@ import {
     Button
 } from "@heroui/react";
 import { CalendarDate } from "@internationalized/date";
-import { type ResponseType as GetAllUserTagsResponse, url as getAllUserTagsUrl } from "../pages/api/getAllUserTags";
 import { useCallback, useMemo, useState } from "react";
-import { usePost } from "@/hooks/usePost";
-import {
-    type BodyType as AddNewTagBody,
-    type ResponseType as AddNewTagResponse,
-    url as addNewTagUrl
-} from "../pages/api/addTag";
 
 export default function TicketForm({
     title,
@@ -92,11 +85,11 @@ export default function TicketForm({
 }
 
 function TagSelect({ selectedTagIds, setSelectedTagIds }: { selectedTagIds: Set<string>, setSelectedTagIds: (tagIds: Set<string>) => void }) {
-    const { doPost: addNewTag, loading: addNewTagLoading } = usePost<AddNewTagBody, AddNewTagResponse>(addNewTagUrl);
+    const { data: allUserTags, isLoading: allUserTagsLoading } = useAllUserTags();
+    const { mutateAsync: doCreateTag } = useCreateTag();
     const [newTagTitle, setNewTagTitle] = useState("");
     const { isOpen, onOpen, onClose } = useDisclosure();
     const [isSelectOpen, setIsSelectOpen] = useState(false);
-    const { data: allUserTags, loading, error, refetch: refetchAllTags } = useFetch<GetAllUserTagsResponse>(getAllUserTagsUrl);
     const selectedTagList = useMemo(() => {
         return allUserTags?.filter(tag => selectedTagIds.has(`${tag.id}`)) || [];
     }, [allUserTags, selectedTagIds]);
@@ -114,16 +107,20 @@ function TagSelect({ selectedTagIds, setSelectedTagIds }: { selectedTagIds: Set<
     }, [onOpen, setSelectedTagIds]);
 
     const handleAddNewTag = useCallback(async () => {
-        await addNewTag({
+        await doCreateTag({
             title: newTagTitle
         })
         setNewTagTitle("");
         onClose();
-        await refetchAllTags();
         setIsSelectOpen(true);
-    }, [addNewTag, newTagTitle, onClose, refetchAllTags, setIsSelectOpen]);
+    }, [
+        doCreateTag,
+        newTagTitle,
+        onClose,
+        setIsSelectOpen
+    ]);
 
-    if (loading || error) {
+    if (allUserTagsLoading) {
         return (
             <Select
                 isMultiline

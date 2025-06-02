@@ -1,51 +1,18 @@
 import { Database } from "@/database/supabase";
-import Ticket from "./ticket"
-import AddTicketCard, { DisabledAddTicketCard } from "./add-ticket-card"
-import { useFetch, useFetchWithQueryParams } from "@/hooks/useFetch";
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import {
-    ResponseType as GetTicketsResponse,
-    ParamsType as GetTicketsParams,
-    url
-} from "../pages/api/getTickets/[swimlaneId]";
-import { RefetchDataFunctionsContext, TagFiltersContext } from "@/pages";
-import {
-    Button,
-    Input,
-    Listbox,
-    ListboxItem,
-    Modal,
-    ModalBody,
-    ModalContent,
-    ModalFooter,
-    ModalHeader,
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-    useDisclosure
-} from "@heroui/react";
-import { usePost } from "@/hooks/usePost";
-import {
-    type BodyType as MoveSwimlaneBody,
-    type ResponseType as MoveSwimlaneResponse,
-    url as moveSwimlaneUrl
-} from "../pages/api/moveSwimlane";
-import {
-    type BodyType as DeleteSwimlaneBody,
-    type ResponseType as DeleteSwimlaneResponse,
-    url as deleteSwimlaneUrl
-} from "../pages/api/deleteSwimlane";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTickets } from "@/data/tickets";
+import AddTicketCard, { DisabledAddTicketCard } from "./add-ticket-card";
+import Ticket from "./ticket";
+import { Button, Input, Listbox, ListboxItem, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Popover, PopoverContent, PopoverTrigger, useDisclosure } from "@heroui/react";
 import { useEnter } from "@/hooks/useEnter";
+import { useDeleteSwimlane, useMoveSwimlane } from "@/data/swimlanes";
+import { useTagFilters } from "@/hooks/useTagFilters";
 
 type Swimlane = Database["public"]["Tables"]["swimlane"]["Row"]
 
 export default function Swimlane({ details }: { details: Swimlane }) {
-    const { registerRefetchFunction } = useContext(RefetchDataFunctionsContext)
-    const [tagFilters, _] = useContext(TagFiltersContext);
-    const getTicketsParams = useMemo(() => ({
-        tagFilters: tagFilters
-    }), [tagFilters]);
-    const { data: tickets, loading, refetch } = useFetchWithQueryParams<GetTicketsParams, GetTicketsResponse>(`${url}/${details.id}`, getTicketsParams);
+    const { tagFilters } = useTagFilters();
+    const { data: tickets, isLoading: ticketsLoading } = useTickets({ swimlaneId: details.id, tagFilters });
     const layoutProps = useMemo(() => ({
         id: details.id,
         title: details.title,
@@ -59,18 +26,10 @@ export default function Swimlane({ details }: { details: Swimlane }) {
     ])
 
     useEffect(() => {
-        refetch(getTicketsParams);
-    }, [getTicketsParams, refetch]);
+        console.log(tagFilters)
+    }, [tagFilters]);
 
-    useEffect(() => {
-        registerRefetchFunction(details.id, refetch);
-    }, [
-        details.id,
-        refetch,
-        registerRefetchFunction
-    ])
-
-    if (loading || !tickets) {
+    if (ticketsLoading || !tickets) {
         return (
             <Layout {...layoutProps}>
                 <DisabledAddTicketCard />
@@ -91,6 +50,7 @@ export default function Swimlane({ details }: { details: Swimlane }) {
         </Layout>
     );
 }
+
 
 function Layout({
     children,
@@ -122,21 +82,18 @@ function Layout({
 }
 
 function Title({ id, title }: { id: number, title: string }) {
+    const { mutateAsync: doMoveSwimlane } = useMoveSwimlane();
+    const { mutateAsync: doDeleteSwimlane, isPending: deleteLoading } = useDeleteSwimlane();
     const [confirmDeleteTitle, setConfirmDeleteTitle] = useState("");
     const { isOpen: isConfirmDeleteModalOpen, onOpen: onConfirmDeleteModalOpen, onClose: onConfirmDeleteModalClose } = useDisclosure();
-    const { refetchAllSwimlanes } = useContext(RefetchDataFunctionsContext);
     const [popoverOpen, setPopoverOpen] = useState(false);
-    const { doPost: moveSwimlane, loading: moveSwimlaneLoading } = usePost<MoveSwimlaneBody, MoveSwimlaneResponse>(moveSwimlaneUrl);
-    const { doPost: deleteSwimlane, loading: deleteLoading } = usePost<DeleteSwimlaneBody, DeleteSwimlaneResponse>(deleteSwimlaneUrl);
     const handleListboxActions = useCallback(async (action: string) => {
         switch (action) {
             case "move-left":
-                await moveSwimlane({ id, direction: "left" });
-                await refetchAllSwimlanes();
+                await doMoveSwimlane({ id, direction: "left" });
                 break;
             case "move-right":
-                await moveSwimlane({ id, direction: "right" });
-                await refetchAllSwimlanes();
+                await doMoveSwimlane({ id, direction: "right" });
                 break;
             case "delete":
                 setConfirmDeleteTitle("");
@@ -148,19 +105,15 @@ function Title({ id, title }: { id: number, title: string }) {
         setPopoverOpen(false);
     }, [
         id,
-        moveSwimlane,
-        refetchAllSwimlanes,
-        setPopoverOpen,
-        onConfirmDeleteModalOpen
+        onConfirmDeleteModalOpen,
+        doMoveSwimlane
     ]);
     const handleConfirmDeleteSwimlane = useCallback(async () => {
-        await deleteSwimlane({ id });
-        await refetchAllSwimlanes();
+        await doDeleteSwimlane({ id });
         onConfirmDeleteModalClose();
     }, [
-        deleteSwimlane,
         id,
-        refetchAllSwimlanes,
+        doDeleteSwimlane,
         onConfirmDeleteModalClose
     ]);
     useEnter(handleConfirmDeleteSwimlane, isConfirmDeleteModalOpen && confirmDeleteTitle === title);
@@ -207,4 +160,3 @@ function Title({ id, title }: { id: number, title: string }) {
         </>
     )
 }
-

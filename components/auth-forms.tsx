@@ -1,18 +1,7 @@
-import React, { useCallback, useContext, useState } from "react";
+import React, { useCallback, useState } from "react";
 import { Button, Card, CardBody, CardHeader, Divider, Input } from "@heroui/react";
-import { usePost } from "@/hooks/usePost";
-import {
-    type BodyType as LoginPostBody,
-    type ResponseType as LoginPostResponse,
-    url as loginPostUrl
-} from "../pages/api/login";
-import {
-    type BodyType as RegisterPostBody,
-    type ResponseType as RegisterPostResponse,
-    url as registerPostUrl
-} from "../pages/api/register";
-import { AuthContext } from "@/pages";
 import { useEnter } from "@/hooks/useEnter";
+import { useLogin, useRegister } from "@/data/auth";
 
 export function LoggedOut() {
     const [visibleForm, setVisibleForm] = useState<"login" | "register">("login")
@@ -46,13 +35,7 @@ export function LoggedOut() {
 }
 
 function RegisterForm({ switchToLogin }: { switchToLogin: () => void }) {
-    const { refetchAuthCookie } = useContext(AuthContext)
-    const {
-        doPost: doRegister,
-        loading: registerLoading,
-    } = usePost<RegisterPostBody, RegisterPostResponse>(registerPostUrl, {
-        successMessage: "Registered successfully! Welcome to Kando!"
-    })
+    const { mutateAsync: doRegister, isPending: registerPending } = useRegister();
     const [username, setUsername] = useState("")
     const [password, setPassword] = useState("")
     const [confirmPassword, setConfirmPassword] = useState("")
@@ -62,8 +45,12 @@ function RegisterForm({ switchToLogin }: { switchToLogin: () => void }) {
             password,
             confirmPassword
         })
-        refetchAuthCookie()
-    }, [username, password, confirmPassword, doRegister, refetchAuthCookie])
+    }, [
+        username,
+        password,
+        confirmPassword,
+        doRegister
+    ])
     useEnter(handleSubmitPress);
     return (
         <>
@@ -94,20 +81,14 @@ function RegisterForm({ switchToLogin }: { switchToLogin: () => void }) {
                 <span className="text-sm text-gray-500 cursor-pointer" onClick={switchToLogin}>
                     Login instead?
                 </span>
-                <Button className="mt-2" onPress={handleSubmitPress}>{registerLoading ? "Loading..." : "Submit"}</Button>
+                <Button className="mt-2" onPress={handleSubmitPress} isLoading={registerPending}>{registerPending ? "Loading..." : "Submit"}</Button>
             </div>
         </>
     )
 }
 
 function LoginForm({ switchToRegister }: { switchToRegister: () => void }) {
-    const { refetchAuthCookie } = useContext(AuthContext)
-    const {
-        doPost: doLogin,
-        loading: loginLoading,
-    } = usePost<LoginPostBody, LoginPostResponse>(loginPostUrl, {
-        successMessage: "Logged in successfully"
-    })
+    const { mutateAsync: doLogin, isPending: loginPending } = useLogin();
     const [username, setUsername] = useState("")
     const [password, setPassword] = useState("")
     const handleSubmitPress = useCallback(async () => {
@@ -115,8 +96,11 @@ function LoginForm({ switchToRegister }: { switchToRegister: () => void }) {
             username,
             password
         })
-        refetchAuthCookie()
-    }, [username, password, doLogin, refetchAuthCookie])
+    }, [
+        username,
+        password,
+        doLogin
+    ])
     useEnter(handleSubmitPress);
     return (
         <>
@@ -139,7 +123,7 @@ function LoginForm({ switchToRegister }: { switchToRegister: () => void }) {
                 <span className="text-sm text-gray-500 cursor-pointer" onClick={switchToRegister}>
                     Register instead?
                 </span>
-                <Button className="mt-2" onPress={handleSubmitPress}>{loginLoading ? "Loading..." : "Submit"}</Button>
+                <Button className="mt-2" onPress={handleSubmitPress} isLoading={loginPending}>{loginPending ? "Loading..." : "Submit"}</Button>
             </div>
         </>
     )

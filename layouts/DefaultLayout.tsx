@@ -1,7 +1,7 @@
 import LogoutButton from "@/components/logout-button";
 import { Head } from "./head";
-import AddSwimlaneButton from "@/components/add-swimlane-button";
 import FilterTicketsPopover from "@/components/filter-tickets-popover";
+import AddSwimlaneButton from "@/components/add-swimlane-button";
 
 export default function DefaultLayout({
     children,

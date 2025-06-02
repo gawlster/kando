@@ -1,28 +1,24 @@
-import { usePost } from "@/hooks/usePost";
 import { Button } from "@heroui/button";
 import { Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, useDisclosure } from "@heroui/react";
-import { useCallback, useContext, useState } from "react";
-import {
-    type BodyType as AddSwimlaneBody,
-    type ResponseType as AddSwimlaneResponse,
-    url
-} from "../pages/api/addSwimlane";
-import { RefetchDataFunctionsContext } from "@/pages";
+import { useCallback, useState } from "react";
 import { useEnter } from "@/hooks/useEnter";
+import { useAddSwimlane } from "@/data/swimlanes";
 
 export default function AddSwimlaneButton() {
-    const { refetchAllSwimlanes } = useContext(RefetchDataFunctionsContext);
+    const { mutateAsync: doAddSwimlane, isPending: loading } = useAddSwimlane();
     const [title, setTitle] = useState("");
     const { isOpen, onOpen, onClose } = useDisclosure();
-    const { doPost, loading } = usePost<AddSwimlaneBody, AddSwimlaneResponse>(url);
     const handleSubmit = useCallback(async () => {
-        await doPost({
+        await doAddSwimlane({
             title,
         })
-        await refetchAllSwimlanes();
         setTitle("");
         onClose();
-    }, [doPost, refetchAllSwimlanes, title, onClose]);
+    }, [
+        doAddSwimlane,
+        title,
+        onClose
+    ]);
     useEnter(handleSubmit, isOpen);
     return (
         <>

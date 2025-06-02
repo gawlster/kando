@@ -1,6 +1,3 @@
-import { Database } from "@/database/supabase";
-import { usePost } from "@/hooks/usePost";
-import { AvailableSwimlanesContext, RefetchDataFunctionsContext, TagFiltersContext } from "@/pages";
 import {
     Button,
     Card,
@@ -19,47 +16,24 @@ import { parseDate } from "@internationalized/date";
 import {
     Key,
     useCallback,
-    useEffect,
     useRef,
     useState,
 } from "react";
-import { useContext } from "react";
-import {
-    type BodyType as UpdateTicketBody,
-    type ResponseType as UpdateTicketResponse,
-    url as updateTicketUrl
-} from "../pages/api/updateTicket";
-import {
-    type BodyType as MoveTicketBody,
-    type ResponseType as MoveTicketResponse,
-    url as moveTicketUrl
-} from "../pages/api/moveTicket";
 import TicketForm from "./ticket-form";
 import { type ResponseType as GetTicketsResponse } from "../pages/api/getTickets/[swimlaneId]";
 import { Unpacked } from "@/utils/typeUtils";
 import { useEnter } from "@/hooks/useEnter";
-import { useFetch } from "@/hooks/useFetch";
-import {
-    type ResponseType as GetAllUserTagsResponse,
-    url as getAllUserTagsUrl
-} from "../pages/api/getAllUserTags";
+import { useMoveTicket, useUpdateTicket } from "@/data/tickets";
+
+const allUserTags = [] as { id: number, title: string, color: string }[]
+const availableSwimlanes = [] as { id: number, title: string }[];
 
 export default function Ticket({ details }: { details: Unpacked<GetTicketsResponse>; }) {
-    const { data: allUserTags } = useFetch<GetAllUserTagsResponse>(getAllUserTagsUrl)
+    const { mutateAsync: doUpdateTicket, isPending: saveLoading } = useUpdateTicket(details.swimlaneId || 0);
+    const { mutateAsync: doMoveTicket } = useMoveTicket(details.swimlaneId || 0);
     const timeoutRef = useRef<NodeJS.Timeout | null>(null)
     const didLongPress = useRef(false)
     const didCancelPress = useRef(false)
-    const [tagFilters, _] = useContext(TagFiltersContext);
-    const { refetchSwimlane } = useContext(RefetchDataFunctionsContext)
-    const {
-        doPost: updateTicketPost,
-        loading: updateLoading,
-    } = usePost<UpdateTicketBody, UpdateTicketResponse>(updateTicketUrl)
-    const {
-        doPost: moveTicketPost,
-        loading: moveLoading,
-    } = usePost<MoveTicketBody, MoveTicketResponse>(moveTicketUrl)
-    const { swimlanes: availableSwimlanes } = useContext(AvailableSwimlanesContext)
     const [editableTitle, setEditableTitle] = useState(details.title)
     const [editableDescription, setEditableDescription] = useState(details.description)
     const [editableStartDate, setEditableStartDate] = useState(parseDate(details.startDate))
@@ -95,7 +69,7 @@ export default function Ticket({ details }: { details: Unpacked<GetTicketsRespon
         onDetailsOpen()
     }, [onDetailsOpen, handleCancelPress])
     const onDetailsSave = useCallback(async () => {
-        await updateTicketPost({
+        await doUpdateTicket({
             id: details.id,
             created_at: details.created_at,
             title: editableTitle,
@@ -105,9 +79,6 @@ export default function Ticket({ details }: { details: Unpacked<GetTicketsRespon
             swimlaneId: details.swimlaneId,
             tagIds: Array.from(editableSelectedTagIds).map((tagId) => Number(tagId))
         })
-        if (details?.swimlaneId) {
-            await refetchSwimlane(details.swimlaneId, { tagFilters });
-        }
         onDetailsClose();
     }, [
         details,
@@ -116,29 +87,19 @@ export default function Ticket({ details }: { details: Unpacked<GetTicketsRespon
         editableStartDate,
         editableDueDate,
         editableSelectedTagIds,
-        updateTicketPost,
-        refetchSwimlane,
-        onDetailsClose,
-        tagFilters
+        doUpdateTicket,
+        onDetailsClose
     ])
     const onMoveAction = useCallback(async (action: Key) => {
-        await moveTicketPost({
+        await doMoveTicket({
             id: details.id,
             newSwimlaneId: Number(action)
         })
-        if (details?.swimlaneId) {
-            await refetchSwimlane(details.swimlaneId, { tagFilters });
-        }
-        if (!isNaN(Number(action))) {
-            await refetchSwimlane(Number(action), { tagFilters });
-        }
         onMoveClose();
     }, [
-        details,
-        moveTicketPost,
-        refetchSwimlane,
-        onMoveClose,
-        tagFilters
+        details.id,
+        doMoveTicket,
+        onMoveClose
     ]);
     const handleCloseDetails = useCallback(() => {
         setEditableTitle(details.title);
@@ -198,7 +159,7 @@ export default function Ticket({ details }: { details: Unpacked<GetTicketsRespon
                     </div>
                 </CardBody>
             </Card>
-            <Modal isOpen={isDetailsOpen} onClose={onDetailsClose} isDismissable={!updateLoading}>
+            <Modal isOpen={isDetailsOpen} onClose={onDetailsClose} isDismissable={false}>
                 <ModalContent>
                     <ModalHeader>Ticket Details</ModalHeader>
                     <ModalBody>
@@ -216,16 +177,16 @@ export default function Ticket({ details }: { details: Unpacked<GetTicketsRespon
                         />
                     </ModalBody>
                     <ModalFooter>
-                        <Button variant="ghost" onPress={handleCloseDetails} disabled={updateLoading}>
+                        <Button variant="ghost" onPress={handleCloseDetails} disabled={saveLoading}>
                             Close
                         </Button>
-                        <Button onPress={onDetailsSave} isLoading={updateLoading}>
-                            {updateLoading ? "Loading..." : "Save"}
+                        <Button onPress={onDetailsSave} isLoading={saveLoading}>
+                            {saveLoading ? "Loading..." : "Save"}
                         </Button>
                     </ModalFooter>
                 </ModalContent>
             </Modal>
-            <Modal isOpen={isMoveOpen} onClose={onMoveClose} isDismissable={!moveLoading}>
+            <Modal isOpen={isMoveOpen} onClose={onMoveClose} isDismissable={false}>
                 <ModalContent>
                     <ModalHeader>Move Ticket</ModalHeader>
                     <ModalBody>
@@ -243,7 +204,7 @@ export default function Ticket({ details }: { details: Unpacked<GetTicketsRespon
                         </Listbox>
                     </ModalBody>
                     <ModalFooter>
-                        <Button variant="ghost" onPress={onMoveClose} disabled={moveLoading}>
+                        <Button variant="ghost" onPress={onMoveClose} disabled={false}>
                             Cancel
                         </Button>
                     </ModalFooter>

@@ -7,7 +7,7 @@ export type BodyType = {
     password: string;
     confirmPassword: string;
 }
-export type ResponseType = void
+export type ResponseType = {}
 export const url = "/api/register"
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ResponseType | { error: string }>) {
@@ -44,7 +44,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     }
     const token = createToken(newUser.id)
     res.setHeader("Set-Cookie", `auth=${token}; Path=/; SameSite=Strict; Secure`)
-    return res.status(200).json()
+    return res.status(200).json({})
 }
 
 function isValidBody(body: BodyType): body is BodyType {

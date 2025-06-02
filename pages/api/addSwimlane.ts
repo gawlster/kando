@@ -4,7 +4,7 @@ import { supabase } from "@/utils/supabase"
 import { NextApiRequest, NextApiResponse } from "next"
 
 export type BodyType = Omit<Database["public"]["Tables"]["swimlane"]["Row"], "created_at" | "id" | "userId" | "gradientColorStart" | "gradientColorEnd" | "sortOrder">
-export type ResponseType = void
+export type ResponseType = {}
 export const url = "/api/addSwimlane"
 
 const swimlaneColors = [
@@ -56,7 +56,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             userId: user.id,
             sortOrder: newOrder
         })
-        return res.status(200).json()
+        return res.status(200).json({})
     } catch (error) {
         return res.status(400).json({ error: (error as Error).message })
     }

@@ -1,5 +1,4 @@
-import { usePost } from "@/hooks/usePost";
-import { RefetchDataFunctionsContext, TagFiltersContext } from "@/pages";
+import { useEnter } from "@/hooks/useEnter";
 import {
     Button,
     Card,
@@ -11,29 +10,13 @@ import {
     ModalHeader,
     useDisclosure,
 } from "@heroui/react";
-import { getLocalTimeZone, today, parseDate, CalendarDate } from "@internationalized/date";
-import {
-    useCallback,
-    useEffect,
-    useState,
-} from "react";
-import { useContext } from "react";
-import {
-    type BodyType as AddCardBody,
-    type ResponseType as AddCardResponse,
-    url as addCardUrl
-} from "../pages/api/addTicket";
+import { getLocalTimeZone, parseDate, today, type CalendarDate } from "@internationalized/date";
+import { useCallback, useState } from "react";
 import TicketForm from "./ticket-form";
-import { useEnter } from "@/hooks/useEnter";
+import { useAddTicket } from "@/data/tickets";
 
 export default function AddTicketCard({ swimlaneId, swimlaneTitle, isEmptySwimlane }: { swimlaneId: number, swimlaneTitle: string, isEmptySwimlane?: boolean }) {
-    const { refetchSwimlane } = useContext(RefetchDataFunctionsContext)
-    const {
-        doPost: addTicket,
-        loading: addLoading,
-        error: addError
-    } = usePost<AddCardBody, AddCardResponse>(addCardUrl)
-    const [tagFilters, _] = useContext(TagFiltersContext);
+    const { mutateAsync: doAddTicket } = useAddTicket(swimlaneId);
     const { isOpen, onOpen, onClose } = useDisclosure();
     const [title, setTitle] = useState("")
     const [description, setDescription] = useState("");
@@ -50,7 +33,7 @@ export default function AddTicketCard({ swimlaneId, swimlaneTitle, isEmptySwimla
         }
     }, [dueDate]);
     const handleSubmit = useCallback(async () => {
-        await addTicket({
+        await doAddTicket({
             title,
             description,
             startDate: startDate.toString(),
@@ -58,21 +41,18 @@ export default function AddTicketCard({ swimlaneId, swimlaneTitle, isEmptySwimla
             swimlaneId,
             tagIds: Array.from(selectedTagIds).map((tagId) => Number(tagId))
         })
-        await refetchSwimlane(swimlaneId, { tagFilters });
         onClose();
     }, [
-        addTicket,
+        doAddTicket,
         title,
         description,
         startDate,
         dueDate,
         swimlaneId,
         selectedTagIds,
-        refetchSwimlane,
-        onClose,
-        tagFilters
+        onClose
     ]);
-    useEnter(handleSubmit, isOpen);
+    useEnter(handleSubmit, isOpen)
     return (
         <>
             <Card

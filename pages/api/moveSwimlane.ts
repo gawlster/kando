@@ -3,7 +3,7 @@ import { supabase } from "@/utils/supabase"
 import { NextApiRequest, NextApiResponse } from "next"
 
 export type BodyType = { id: number, direction: "left" | "right" }
-export type ResponseType = void
+export type ResponseType = {}
 export const url = "/api/moveSwimlane"
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ResponseType | { error: string }>) {
@@ -101,7 +101,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             }));
             await supabase.from("swimlane").upsert(updates);
         }
-        return res.status(200).json()
+        return res.status(200).json({})
     } catch (error) {
         return res.status(400).json({ error: (error as Error).message })
     }

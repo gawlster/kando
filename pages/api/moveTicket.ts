@@ -6,7 +6,7 @@ export type BodyType = {
     id: number;
     newSwimlaneId: number;
 }
-export type ResponseType = void
+export type ResponseType = {}
 export const url = "/api/moveTicket"
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ResponseType | { error: string }>) {
@@ -36,7 +36,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         await supabase.from("ticket").update({
             swimlaneId: body.newSwimlaneId
         }).eq("id", body.id)
-        return res.status(200).json()
+        return res.status(200).json({})
     } catch (error) {
         return res.status(400).json({ error: (error as Error).message })
     }

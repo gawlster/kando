@@ -4,7 +4,7 @@ import { supabase } from "@/utils/supabase"
 import { NextApiRequest, NextApiResponse } from "next"
 
 export type BodyType = Database["public"]["Tables"]["ticket"]["Row"] & { tagIds: number[] }
-export type ResponseType = void
+export type ResponseType = {}
 export const url = "/api/updateTicket"
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ResponseType | { error: string }>) {
@@ -52,7 +52,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
                 await supabase.from("ticketTag").delete().eq("ticketId", body.id).eq("tagId", tagId)
             }
         })
-        return res.status(200).json()
+        return res.status(200).json({})
     } catch (error) {
         return res.status(400).json({ error: (error as Error).message })
     }
