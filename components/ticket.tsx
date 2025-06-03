@@ -14,6 +14,7 @@ import {
 } from "@heroui/react";
 import { parseDate } from "@internationalized/date";
 import {
+    forwardRef,
     Key,
     useCallback,
     useRef,
@@ -28,7 +29,16 @@ import { useMoveTicket, useUpdateTicket } from "@/data/tickets";
 const allUserTags = [] as { id: number, title: string, color: string }[]
 const availableSwimlanes = [] as { id: number, title: string }[];
 
-export default function Ticket({ details }: { details: Unpacked<GetTicketsResponse>; }) {
+type TicketProps = {
+    details: Unpacked<GetTicketsResponse>;
+    interactionEnabled?: boolean
+    ref?: React.Ref<HTMLDivElement>;
+    style?: React.CSSProperties;
+    listeners?: React.HTMLAttributes<HTMLElement>;
+    attributes?: React.HTMLAttributes<HTMLElement>;
+};
+
+const Ticket = forwardRef<HTMLDivElement, TicketProps>(({ details, interactionEnabled = true, style, listeners = {}, attributes = {} }, ref) => {
     const { mutateAsync: doUpdateTicket, isPending: saveLoading } = useUpdateTicket(details.swimlaneId || 0);
     const { mutateAsync: doMoveTicket } = useMoveTicket(details.swimlaneId || 0);
     const timeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -118,20 +128,29 @@ export default function Ticket({ details }: { details: Unpacked<GetTicketsRespon
         setEditableSelectedTagIds
     ]);
     useEnter(onDetailsSave, isDetailsOpen);
+    const customHandlers = interactionEnabled ? {
+        onMouseDown: handleStartPress,
+        onTouchStart: handleStartPress,
+        onMouseUp: handleEndPress,
+        onTouchEnd: handleEndPress,
+        onMouseLeave: handleCancelPress,
+        onTouchCancel: handleCancelPress,
+        onTouchMove: handleCancelPress
+    } : {};
     return (
         <>
             <Card
+                ref={ref}
+                {...(listeners as any)}
+                {...(attributes as any)}
                 className="w-64 bg-background/70 min-h-20"
                 isPressable
                 isBlurred
-                style={{ boxShadow: '0 4px 8px rgba(0, 0, 0, 0.45)' }}
-                onMouseDown={handleStartPress}
-                onTouchStart={handleStartPress}
-                onMouseUp={handleEndPress}
-                onTouchEnd={handleEndPress}
-                onMouseLeave={handleCancelPress}
-                onTouchCancel={handleCancelPress}
-                onTouchMove={handleCancelPress}
+                style={{
+                    ...style,
+                    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.45)'
+                }}
+                {...customHandlers}
             >
                 <CardBody className="h-full justify-center w-full">
                     <span className="font-semibold">{details.title}</span>
@@ -212,4 +231,6 @@ export default function Ticket({ details }: { details: Unpacked<GetTicketsRespon
             </Modal>
         </>
     )
-}
+})
+
+export default Ticket;

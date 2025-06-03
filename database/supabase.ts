@@ -110,6 +110,7 @@ export type Database = {
           description: string
           dueDate: string
           id: number
+          sortOrder: number
           startDate: string
           swimlaneId: number | null
           title: string
@@ -119,6 +120,7 @@ export type Database = {
           description?: string
           dueDate: string
           id?: number
+          sortOrder?: number
           startDate: string
           swimlaneId?: number | null
           title?: string
@@ -128,6 +130,7 @@ export type Database = {
           description?: string
           dueDate?: string
           id?: number
+          sortOrder?: number
           startDate?: string
           swimlaneId?: number | null
           title?: string

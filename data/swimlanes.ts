@@ -9,6 +9,11 @@ import {
     url as addSwimlaneUrl
 } from "../pages/api/addSwimlane";
 import {
+    type BodyType as SortTicketsBody,
+    type ResponseType as SortTicketsResponse,
+    url as sortTicketsUrl
+} from "../pages/api/sortTickets";
+import {
     type BodyType as MoveSwimlaneBody,
     type ResponseType as MoveSwimlaneResponse,
     url as moveSwimlaneUrl
@@ -18,6 +23,7 @@ import {
     type ResponseType as DeleteSwimlaneResponse,
     url as deleteSwimlaneUrl
 } from "../pages/api/deleteSwimlane";
+import { useRef } from "react";
 
 export function useSwimlanes() {
     return useQuery<GetSwimlanesResponse, Error>({
@@ -76,6 +82,31 @@ export function useMoveSwimlane() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["swimlanes"] });
+        }
+    });
+}
+
+export function useSortTickets(swimlaneId: number) {
+    const queryClient = useQueryClient();
+    return useMutation<
+        SortTicketsResponse,
+        Error,
+        SortTicketsBody
+    >({
+        mutationKey: ["sortTickets", swimlaneId],
+        mutationFn: async (body) => {
+            const res = await fetch(sortTicketsUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body),
+            });
+            if (!res.ok) {
+                throw new Error("Failed to sort tickets");
+            }
+            return res.json();
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["tickets", swimlaneId] });
         }
     });
 }

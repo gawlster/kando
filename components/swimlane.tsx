@@ -5,36 +5,27 @@ import AddTicketCard, { DisabledAddTicketCard } from "./add-ticket-card";
 import Ticket from "./ticket";
 import { Button, Input, Listbox, ListboxItem, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Popover, PopoverContent, PopoverTrigger, useDisclosure } from "@heroui/react";
 import { useEnter } from "@/hooks/useEnter";
-import { useDeleteSwimlane, useMoveSwimlane } from "@/data/swimlanes";
+import { useDeleteSwimlane, useMoveSwimlane, useSortTickets } from "@/data/swimlanes";
 import { useTagFilters } from "@/hooks/useTagFilters";
+import SortableSwimlane from "./sortable-swimlane";
+import { type ResponseType as GetTicketsResponse } from "../pages/api/getTickets/[swimlaneId]";
 
 type Swimlane = Database["public"]["Tables"]["swimlane"]["Row"]
 
 export default function Swimlane({ details }: { details: Swimlane }) {
     const { tagFilters } = useTagFilters();
     const { data: tickets, isLoading: ticketsLoading } = useTickets({ swimlaneId: details.id, tagFilters });
-    const layoutProps = useMemo(() => ({
-        id: details.id,
-        title: details.title,
-        gradientColorStart: details.gradientColorStart,
-        gradientColorEnd: details.gradientColorEnd
-    }), [
-        details.id,
-        details.title,
-        details.gradientColorStart,
-        details.gradientColorEnd
-    ])
 
     if (ticketsLoading || !tickets) {
         return (
-            <Layout {...layoutProps}>
+            <Layout details={details} tickets={[]}>
                 <DisabledAddTicketCard />
             </Layout>
         )
     }
 
     return (
-        <Layout {...layoutProps}>
+        <Layout details={details} tickets={tickets}>
             {tickets.map((ticket) => (
                 <Ticket key={ticket.id} details={ticket} />
             ))}
@@ -48,26 +39,14 @@ export default function Swimlane({ details }: { details: Swimlane }) {
 }
 
 
-function Layout({
-    children,
-    id,
-    title,
-    gradientColorStart,
-    gradientColorEnd
-}: {
-    children?: React.ReactNode,
-    id: number,
-    title: string,
-    gradientColorStart: string,
-    gradientColorEnd: string
-}) {
+function Layout({ children, details, tickets }: { children: React.ReactNode; details: Swimlane; tickets: GetTicketsResponse }) {
     return (
         <div className="flex flex-col w-[272px]">
-            <Title id={id} title={title} />
+            <Title details={details} tickets={tickets} />
             <div
                 className="p-2 flex flex-col gap-1 rounded-md overflow-y-auto max-h-full hide-scrollbar"
                 style={{
-                    background: `linear-gradient(135deg, ${gradientColorStart}, ${gradientColorEnd})`,
+                    background: `linear-gradient(135deg, ${details.gradientColorStart}, ${details.gradientColorEnd})`,
                     boxShadow: '0 8px 12px rgba(0, 0, 0, 0.50)',
                 }}
             >
@@ -77,19 +56,28 @@ function Layout({
     );
 }
 
-function Title({ id, title }: { id: number, title: string }) {
+function Title({ details, tickets }: { details: Swimlane; tickets: GetTicketsResponse }) {
     const { mutateAsync: doMoveSwimlane } = useMoveSwimlane();
+    const { mutateAsync: doSortTickets } = useSortTickets(details.id);
     const { mutateAsync: doDeleteSwimlane, isPending: deleteLoading } = useDeleteSwimlane();
     const [confirmDeleteTitle, setConfirmDeleteTitle] = useState("");
     const { isOpen: isConfirmDeleteModalOpen, onOpen: onConfirmDeleteModalOpen, onClose: onConfirmDeleteModalClose } = useDisclosure();
+    const { isOpen: isSortTicketsModalOpen, onOpen: onSortTicketsModalOpen, onClose: onSortTicketsModalClose } = useDisclosure();
     const [popoverOpen, setPopoverOpen] = useState(false);
+    const [sortableTickets, setSortableTickets] = useState(tickets);
+    useEffect(() => {
+        setSortableTickets(tickets);
+    }, [tickets]);
     const handleListboxActions = useCallback(async (action: string) => {
         switch (action) {
+            case "sort":
+                onSortTicketsModalOpen();
+                break;
             case "move-left":
-                await doMoveSwimlane({ id, direction: "left" });
+                await doMoveSwimlane({ id: details.id, direction: "left" });
                 break;
             case "move-right":
-                await doMoveSwimlane({ id, direction: "right" });
+                await doMoveSwimlane({ id: details.id, direction: "right" });
                 break;
             case "delete":
                 setConfirmDeleteTitle("");
@@ -100,28 +88,37 @@ function Title({ id, title }: { id: number, title: string }) {
         }
         setPopoverOpen(false);
     }, [
-        id,
+        details.id,
         onConfirmDeleteModalOpen,
         doMoveSwimlane
     ]);
+    const handleConfirmSortTickets = useCallback(async () => {
+        await doSortTickets({ swimlaneId: details.id, tickets: sortableTickets.map(ticket => ({ id: ticket.id })) });
+        onSortTicketsModalClose();
+    }, [
+        sortableTickets,
+        doSortTickets,
+        onSortTicketsModalClose
+    ]);
     const handleConfirmDeleteSwimlane = useCallback(async () => {
-        await doDeleteSwimlane({ id });
+        await doDeleteSwimlane({ id: details.id });
         onConfirmDeleteModalClose();
     }, [
-        id,
+        details.id,
         doDeleteSwimlane,
         onConfirmDeleteModalClose
     ]);
-    useEnter(handleConfirmDeleteSwimlane, isConfirmDeleteModalOpen && confirmDeleteTitle === title);
+    useEnter(handleConfirmDeleteSwimlane, isConfirmDeleteModalOpen && confirmDeleteTitle === details.title);
     return (
         <>
             <Popover placement="bottom-start" isOpen={popoverOpen} onOpenChange={setPopoverOpen}>
                 <PopoverTrigger>
-                    <span className="cursor-pointer">▼ {title}</span>
+                    <span className="cursor-pointer">▼ {details.title}</span>
                 </PopoverTrigger>
                 <PopoverContent>
                     <div>
                         <Listbox aria-label="Swimlane Actions" onAction={(action) => handleListboxActions(action as string)}>
+                            <ListboxItem key="sort">Sort tickets</ListboxItem>
                             <ListboxItem key="move-left">Move swimlane left</ListboxItem>
                             <ListboxItem key="move-right">Move swimlane right</ListboxItem>
                             <ListboxItem key="delete">Delete swimlane</ListboxItem>
@@ -134,7 +131,7 @@ function Title({ id, title }: { id: number, title: string }) {
                     <ModalHeader>Confirm Delete</ModalHeader>
                     <ModalBody>
                         <p>Warning: This will also delete all tickets currently in the swimlane. This action cannot be undone.</p>
-                        <p>Enter the swimlane{"'"}s title {'"'}{title}{'"'} to continue.</p>
+                        <p>Enter the swimlane{"'"}s title {'"'}{details.title}{'"'} to continue.</p>
                         <Input
                             label="Title"
                             labelPlacement="inside"
@@ -147,8 +144,24 @@ function Title({ id, title }: { id: number, title: string }) {
                         <Button variant="ghost" onPress={onConfirmDeleteModalClose} disabled={deleteLoading}>
                             Cancel
                         </Button>
-                        <Button onPress={handleConfirmDeleteSwimlane} isLoading={deleteLoading} isDisabled={confirmDeleteTitle !== title} color="danger">
+                        <Button onPress={handleConfirmDeleteSwimlane} isLoading={deleteLoading} isDisabled={confirmDeleteTitle !== details.title} color="danger">
                             {deleteLoading ? "Loading..." : "Add"}
+                        </Button>
+                    </ModalFooter>
+                </ModalContent>
+            </Modal>
+            <Modal isOpen={isSortTicketsModalOpen} onClose={onSortTicketsModalClose} isDismissable={false}>
+                <ModalContent>
+                    <ModalHeader>Sort Tickets</ModalHeader>
+                    <ModalBody>
+                        <SortableSwimlane sortableTickets={sortableTickets} setSortableTickets={setSortableTickets} />
+                    </ModalBody>
+                    <ModalFooter>
+                        <Button variant="ghost" onPress={onSortTicketsModalClose}>
+                            Cancel
+                        </Button>
+                        <Button onPress={handleConfirmSortTickets} isLoading={false}>
+                            Confirm Sort
                         </Button>
                     </ModalFooter>
                 </ModalContent>
