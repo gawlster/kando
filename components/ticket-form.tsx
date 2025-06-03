@@ -28,7 +28,7 @@ export default function TicketForm({
     dueDate,
     setDueDate,
     selectedTagIds,
-    setSelectedTagIds
+    setSelectedTagIds,
 }: {
     title: string,
     setTitle: (title: string) => void,
@@ -39,7 +39,7 @@ export default function TicketForm({
     dueDate: CalendarDate,
     setDueDate: (date: CalendarDate) => void,
     selectedTagIds: Set<string>,
-    setSelectedTagIds: (tagIds: Set<string>) => void
+    setSelectedTagIds: (tagIds: Set<string>) => void,
 }) {
     return (
         <>

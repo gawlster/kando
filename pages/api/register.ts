@@ -44,7 +44,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     }
     const token = createToken(newUser.id)
     res.setHeader("Set-Cookie", `auth=${token}; Path=/; SameSite=Strict; Secure`)
-    return res.status(200).json({})
+    return res.status(200).json({ resetAuth: true })
 }
 
 function isValidBody(body: BodyType): body is BodyType {

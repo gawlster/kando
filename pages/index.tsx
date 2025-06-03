@@ -1,43 +1,53 @@
 import DefaultLayout from "@/layouts/DefaultLayout";
-import React, { useEffect, useState } from "react";
 import { Toaster } from "react-hot-toast";
 import { LoggedOut } from "@/components/auth-forms";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useSwimlanes } from "@/data/swimlanes";
 import Swimlane from "@/components/swimlane";
+import { AuthProvider, useAuth } from "@/hooks/useAuth";
 
-function getAuthCookie() {
-    if (typeof document === "undefined") {
-        return "";
-    }
-    const cookies = document.cookie.split("; ");
-    for (const cookie of cookies) {
-        const [name, value] = cookie.split("=");
-        if (name === "auth") {
-            return decodeURIComponent(value);
-        }
-    }
-    return ""
-}
-
-const queryClient = new QueryClient();
+export const queryClient = new QueryClient({
+    queryCache: new QueryCache({
+        onError: (error, query) => {
+            if (error instanceof Error) {
+                if (error.message.includes('401')) {
+                    window.dispatchEvent(new CustomEvent(`authChanged`));
+                    console.warn('Query 401 Unauthorized. Updated local auth state.');
+                }
+            }
+        },
+    }),
+    mutationCache: new MutationCache({
+        onError: (error, variables, context, mutation) => {
+            if (error instanceof Error) {
+                if (error.message.includes('401')) {
+                    window.dispatchEvent(new CustomEvent(`authChanged`));
+                    console.warn('Mutation 401 Unauthorized. Updated local auth state.');
+                }
+            }
+        },
+        onSuccess: (data, variables, context, mutation) => {
+            if (typeof data === 'object' && data !== null && "resetAuth" in data) {
+                window.dispatchEvent(new CustomEvent(`authChanged`));
+            }
+        },
+    }),
+});
 
 export default function IndexPage() {
-    const [loggedIn, setLoggedIn] = useState(false);
-    useEffect(() => {
-        const authCookie = getAuthCookie();
-        if (authCookie !== "") {
-            setLoggedIn(true);
-        } else {
-            setLoggedIn(false);
-        }
-    }, []);
     return (
         <QueryClientProvider client={queryClient}>
-            <Toaster />
-            {loggedIn ? <LoggedIn /> : <LoggedOut />}
+            <AuthProvider>
+                <Toaster />
+                <App />
+            </AuthProvider>
         </QueryClientProvider>
     )
+}
+
+function App() {
+    const { isAuthenticated } = useAuth();
+    return isAuthenticated ? <LoggedIn /> : <LoggedOut />;
 }
 
 function LoggedIn() {

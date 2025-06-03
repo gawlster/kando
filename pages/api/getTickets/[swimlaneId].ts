@@ -3,9 +3,6 @@ import { doesLoggedInUserOwnSwimlane } from "@/utils/auth";
 import { supabase } from "@/utils/supabase";
 import { NextApiRequest, NextApiResponse } from "next";
 
-export type ParamsType = {
-    tagFilters?: string;
-}
 export type ResponseType = (Database["public"]["Tables"]["ticket"]["Row"] & {
     tagIds: string[];
 })[];

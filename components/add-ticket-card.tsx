@@ -14,15 +14,17 @@ import { getLocalTimeZone, parseDate, today, type CalendarDate } from "@internat
 import { useCallback, useState } from "react";
 import TicketForm from "./ticket-form";
 import { useAddTicket } from "@/data/tickets";
+import { useTagFilters } from "@/hooks/useTagFilters";
 
 export default function AddTicketCard({ swimlaneId, swimlaneTitle, isEmptySwimlane }: { swimlaneId: number, swimlaneTitle: string, isEmptySwimlane?: boolean }) {
     const { mutateAsync: doAddTicket } = useAddTicket(swimlaneId);
+    const { tagFilters } = useTagFilters();
     const { isOpen, onOpen, onClose } = useDisclosure();
     const [title, setTitle] = useState("")
     const [description, setDescription] = useState("");
     const [startDate, setStartDate] = useState(parseDate(today(getLocalTimeZone()).toString()));
     const [dueDate, setDueDate] = useState(parseDate(today(getLocalTimeZone()).toString()));
-    const [selectedTagIds, setSelectedTagIds] = useState<Set<string>>(new Set());
+    const [selectedTagIds, setSelectedTagIds] = useState<Set<string>>(new Set(tagFilters.split(",").map((tagId) => tagId.trim())));
     const handlePress = useCallback(() => {
         onOpen();
     }, [onOpen]);
@@ -63,7 +65,7 @@ export default function AddTicketCard({ swimlaneId, swimlaneTitle, isEmptySwimla
                     <span>Add card</span>
                 </CardBody>
             </Card>
-            <Modal isOpen={isOpen} onClose={onClose}>
+            <Modal isOpen={isOpen} onClose={onClose} isDismissable={false}>
                 <ModalContent>
                     <ModalHeader>Add Ticket to {swimlaneTitle}</ModalHeader>
                     <ModalBody>

@@ -25,10 +25,6 @@ export default function Swimlane({ details }: { details: Swimlane }) {
         details.gradientColorEnd
     ])
 
-    useEffect(() => {
-        console.log(tagFilters)
-    }, [tagFilters]);
-
     if (ticketsLoading || !tickets) {
         return (
             <Layout {...layoutProps}>
