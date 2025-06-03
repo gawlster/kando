@@ -89,15 +89,17 @@ function Title({ details, tickets }: { details: Swimlane; tickets: GetTicketsRes
         setPopoverOpen(false);
     }, [
         details.id,
-        onConfirmDeleteModalOpen,
-        doMoveSwimlane
+        doMoveSwimlane,
+        onSortTicketsModalOpen,
+        onConfirmDeleteModalOpen
     ]);
     const handleConfirmSortTickets = useCallback(async () => {
         await doSortTickets({ swimlaneId: details.id, tickets: sortableTickets.map(ticket => ({ id: ticket.id })) });
         onSortTicketsModalClose();
     }, [
-        sortableTickets,
+        details.id,
         doSortTickets,
+        sortableTickets,
         onSortTicketsModalClose
     ]);
     const handleConfirmDeleteSwimlane = useCallback(async () => {

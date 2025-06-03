@@ -3,7 +3,7 @@ import { doesLoggedInUserOwnSwimlane } from "@/utils/auth"
 import { supabase } from "@/utils/supabase"
 import { NextApiRequest, NextApiResponse } from "next"
 
-export type BodyType = Database["public"]["Tables"]["ticket"]["Row"] & { tagIds: number[] }
+export type BodyType = Omit<Database["public"]["Tables"]["ticket"]["Row"], "sortOrder"> & { tagIds: number[] }
 export type ResponseType = {}
 export const url = "/api/updateTicket"
 

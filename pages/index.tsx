@@ -5,6 +5,7 @@ import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from "@ta
 import { useSwimlanes } from "@/data/swimlanes";
 import Swimlane from "@/components/swimlane";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import UnfinishedSiteWarning from "@/components/unfinished-site-warning";
 
 export const queryClient = new QueryClient({
     queryCache: new QueryCache({
@@ -38,6 +39,7 @@ export default function IndexPage() {
     return (
         <QueryClientProvider client={queryClient}>
             <AuthProvider>
+                <UnfinishedSiteWarning />
                 <Toaster />
                 <App />
             </AuthProvider>

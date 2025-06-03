@@ -141,7 +141,9 @@ const Ticket = forwardRef<HTMLDivElement, TicketProps>(({ details, interactionEn
         <>
             <Card
                 ref={ref}
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 {...(listeners as any)}
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 {...(attributes as any)}
                 className="w-64 bg-background/70 min-h-20"
                 isPressable
@@ -232,5 +234,7 @@ const Ticket = forwardRef<HTMLDivElement, TicketProps>(({ details, interactionEn
         </>
     )
 })
+
+Ticket.displayName = "Ticket";
 
 export default Ticket;
