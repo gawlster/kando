@@ -19,6 +19,7 @@ import {
     useCallback,
     useRef,
     useState,
+    Fragment
 } from "react";
 import TicketForm from "./ticket-form";
 import { type ResponseType as GetTicketsResponse } from "../pages/api/getTickets/[swimlaneId]";
@@ -170,7 +171,7 @@ const Ticket = forwardRef<HTMLDivElement, TicketProps>(({ details, interactionEn
                     </div>
                     <div className="flex flex-wrap gap-1 w-full mt-2">
                         {allUserTags ? allUserTags.map((tag) => (
-                            <>
+                            <Fragment key={tag.id}>
                                 {details.tagIds?.map((tagId) => {
                                     if (`${tag.id}` === tagId) {
                                         return (
@@ -184,7 +185,7 @@ const Ticket = forwardRef<HTMLDivElement, TicketProps>(({ details, interactionEn
                                         )
                                     }
                                 })}
-                            </>
+                            </Fragment>
                         )) : null}
                     </div>
                 </CardBody>
