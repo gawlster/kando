@@ -26,8 +26,7 @@ import { Unpacked } from "@/utils/typeUtils";
 import { useEnter } from "@/hooks/useEnter";
 import { useMoveTicket, useUpdateTicket } from "@/data/tickets";
 import { useSwimlanes } from "@/data/swimlanes";
-
-const allUserTags = [] as { id: number, title: string, color: string }[]
+import { useAllUserTags } from "@/data/tags";
 
 type TicketProps = {
     details: Unpacked<GetTicketsResponse>;
@@ -42,6 +41,7 @@ const Ticket = forwardRef<HTMLDivElement, TicketProps>(({ details, interactionEn
     const { mutateAsync: doUpdateTicket, isPending: saveLoading } = useUpdateTicket(details.swimlaneId || 0);
     const { mutateAsync: doMoveTicket } = useMoveTicket(details.swimlaneId || 0);
     const { data: swimlanes } = useSwimlanes();
+    const { data: allUserTags } = useAllUserTags();
     const timeoutRef = useRef<NodeJS.Timeout | null>(null)
     const didLongPress = useRef(false)
     const didCancelPress = useRef(false)
@@ -169,9 +169,9 @@ const Ticket = forwardRef<HTMLDivElement, TicketProps>(({ details, interactionEn
                         {details.startDate} - {details.dueDate}
                     </div>
                     <div className="flex flex-wrap gap-1 w-full mt-2">
-                        {details.tagIds.map((tagId) => (
+                        {allUserTags ? allUserTags.map((tag) => (
                             <>
-                                {allUserTags?.map((tag) => {
+                                {details.tagIds?.map((tagId) => {
                                     if (`${tag.id}` === tagId) {
                                         return (
                                             <Chip
@@ -185,7 +185,7 @@ const Ticket = forwardRef<HTMLDivElement, TicketProps>(({ details, interactionEn
                                     }
                                 })}
                             </>
-                        ))}
+                        )) : null}
                     </div>
                 </CardBody>
             </Card>
