@@ -9,7 +9,7 @@ export function createToken(userId: number) {
         throw new Error("JWT secret is not defined");
     }
     const payload = { userId };
-    const options = { expiresIn: "1h" } as jwt.SignOptions;
+    const options = { expiresIn: "7d" } as jwt.SignOptions;
     const token = jwt.sign(payload, secret as string, options);
     return token;
 }
