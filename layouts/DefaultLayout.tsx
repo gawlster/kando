@@ -13,7 +13,7 @@ export default function DefaultLayout({
     const [popoverOpen, setPopoverOpen] = useState(false);
     const { onPress: onLogoutPress } = useLogoutPressable();
     const { onPress: onAddSwimlanePress, modal: AddSwimlaneModal } = useAddSwimlanePressable();
-    const { onPress: onFilterTicketsPress, popover: FilterTicketsPopover } = useFilterTicketsPressable();
+    const { onPress: onFilterTicketsPress, modal: FilterTicketsModal } = useFilterTicketsPressable();
     const handleListboxAction = useCallback((action: string) => {
         switch (action) {
             case "logout":
@@ -56,7 +56,7 @@ export default function DefaultLayout({
             </div>
             <main className="h-full p-4 w-full overflow-x-auto">{children}</main>
             {AddSwimlaneModal}
-            {FilterTicketsPopover}
+            {FilterTicketsModal}
         </div>
     );
 }
