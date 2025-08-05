@@ -35,14 +35,18 @@ export default function AddTicketCard({ swimlaneId, swimlaneTitle, isEmptySwimla
         }
     }, [dueDate]);
     const handleSubmit = useCallback(async () => {
-        await doAddTicket({
-            title,
-            description,
-            startDate: startDate.toString(),
-            dueDate: dueDate.toString(),
-            swimlaneId,
-            tagIds: Array.from(selectedTagIds).map((tagId) => Number(tagId))
-        })
+        try {
+            await doAddTicket({
+                title,
+                description,
+                startDate: startDate.toString(),
+                dueDate: dueDate.toString(),
+                swimlaneId,
+                tagIds: Array.from(selectedTagIds).map((tagId) => Number(tagId))
+            })
+        } catch (_) {
+            // do nothing, handled in the hook
+        }
         onClose();
     }, [
         doAddTicket,

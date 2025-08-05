@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { getAndThrowError } from "@/utils/dataUtils";
 import {
     type BodyType as LoginBody,
     type ResponseType as LoginResponse,
@@ -9,9 +9,10 @@ import {
     type ResponseType as RegisterResponse,
     url as registerUrl
 } from "../pages/api/register";
+import { useToastMutation } from "@/hooks/useToastMutation";
 
 export function useLogin() {
-    return useMutation<
+    return useToastMutation<
         LoginResponse,
         Error,
         LoginBody
@@ -24,15 +25,20 @@ export function useLogin() {
                 body: JSON.stringify(body),
             });
             if (!res.ok) {
-                throw new Error("Failed to login");
+                await getAndThrowError(res, "Failed to log in");
             }
             return res.json();
         },
-    });
+    },
+        {
+            loading: "Logging in...",
+            success: "Login successful!",
+            error: (error) => `Login failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+        });
 }
 
 export function useRegister() {
-    return useMutation<
+    return useToastMutation<
         RegisterResponse,
         Error,
         RegisterBody
@@ -45,9 +51,14 @@ export function useRegister() {
                 body: JSON.stringify(body),
             });
             if (!res.ok) {
-                throw new Error("Failed to register");
+                await getAndThrowError(res, "Failed to register");
             }
             return res.json();
         },
-    });
+    },
+        {
+            loading: "Registering...",
+            success: "Registration successful! Welcome to Kando!",
+            error: (error) => `Registration failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+        });
 }

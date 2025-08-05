@@ -4,14 +4,18 @@ import { useCallback, useState } from "react";
 import { useEnter } from "@/hooks/useEnter";
 import { useAddSwimlane } from "@/data/swimlanes";
 
-export default function AddSwimlaneButton() {
+export default function useAddSwimlanePressable() {
     const { mutateAsync: doAddSwimlane, isPending: loading } = useAddSwimlane();
     const [title, setTitle] = useState("");
     const { isOpen, onOpen, onClose } = useDisclosure();
     const handleSubmit = useCallback(async () => {
-        await doAddSwimlane({
-            title,
-        })
+        try {
+            await doAddSwimlane({
+                title,
+            })
+        } catch (_) {
+            // do nothing, handled in the hook
+        }
         setTitle("");
         onClose();
     }, [
@@ -20,11 +24,9 @@ export default function AddSwimlaneButton() {
         onClose
     ]);
     useEnter(handleSubmit, isOpen);
-    return (
-        <>
-            <Button onPress={onOpen}>
-                Add Swimlane
-            </Button>
+    return {
+        onPress: onOpen,
+        modal: (
             <Modal isOpen={isOpen} onClose={onClose} isDismissable={!loading}>
                 <ModalContent>
                     <ModalHeader>Add Swimlane</ModalHeader>
@@ -47,6 +49,6 @@ export default function AddSwimlaneButton() {
                     </ModalFooter>
                 </ModalContent>
             </Modal>
-        </>
-    )
+        )
+    }
 }

@@ -107,9 +107,13 @@ function TagSelect({ selectedTagIds, setSelectedTagIds }: { selectedTagIds: Set<
     }, [onOpen, setSelectedTagIds]);
 
     const handleAddNewTag = useCallback(async () => {
-        await doCreateTag({
-            title: newTagTitle
-        })
+        try {
+            await doCreateTag({
+                title: newTagTitle
+            })
+        } catch (_) {
+            // do nothing, handled in the hook
+        }
         setNewTagTitle("");
         onClose();
         setIsSelectOpen(true);

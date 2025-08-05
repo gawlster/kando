@@ -74,10 +74,18 @@ function Title({ details, tickets }: { details: Swimlane; tickets: GetTicketsRes
                 onSortTicketsModalOpen();
                 break;
             case "move-left":
-                await doMoveSwimlane({ id: details.id, direction: "left" });
+                try {
+                    await doMoveSwimlane({ id: details.id, direction: "left" });
+                } catch (_) {
+                    // do nothing, handled in the hook
+                }
                 break;
             case "move-right":
-                await doMoveSwimlane({ id: details.id, direction: "right" });
+                try {
+                    await doMoveSwimlane({ id: details.id, direction: "right" });
+                } catch (_) {
+                    // do nothing, handled in the hook
+                }
                 break;
             case "delete":
                 setConfirmDeleteTitle("");
@@ -94,7 +102,11 @@ function Title({ details, tickets }: { details: Swimlane; tickets: GetTicketsRes
         onConfirmDeleteModalOpen
     ]);
     const handleConfirmSortTickets = useCallback(async () => {
-        await doSortTickets({ swimlaneId: details.id, tickets: sortableTickets.map(ticket => ({ id: ticket.id })) });
+        try {
+            await doSortTickets({ swimlaneId: details.id, tickets: sortableTickets.map(ticket => ({ id: ticket.id })) });
+        } catch (_) {
+            // do nothing, handled in the hook
+        }
         onSortTicketsModalClose();
     }, [
         details.id,
@@ -103,7 +115,11 @@ function Title({ details, tickets }: { details: Swimlane; tickets: GetTicketsRes
         onSortTicketsModalClose
     ]);
     const handleConfirmDeleteSwimlane = useCallback(async () => {
-        await doDeleteSwimlane({ id: details.id });
+        try {
+            await doDeleteSwimlane({ id: details.id });
+        } catch (_) {
+            // do nothing, handled in the hook
+        }
         onConfirmDeleteModalClose();
     }, [
         details.id,

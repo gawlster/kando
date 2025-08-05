@@ -35,7 +35,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const { data: newUser, error } = await supabase.from("user").insert({
         username: body.username,
         passwordHash
-    }).select("*").single()
+    }).select("id").single()
     if (error) {
         return res.status(400).json({ error: error.message })
     }

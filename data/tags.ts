@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
     type ResponseType as GetAllUserTagsResponse,
     url as getAllUserTagsUrl
@@ -8,6 +8,8 @@ import {
     type ResponseType as CreateTagResponse,
     url as createTagUrl
 } from "../pages/api/createTag";
+import { useToastMutation } from "@/hooks/useToastMutation";
+import { getAndThrowError } from "@/utils/dataUtils";
 
 export function useAllUserTags() {
     return useQuery<GetAllUserTagsResponse, Error>({
@@ -22,7 +24,7 @@ export function useAllUserTags() {
 
 export function useCreateTag() {
     const queryClient = useQueryClient();
-    return useMutation<
+    return useToastMutation<
         CreateTagResponse,
         Error,
         CreateTagBody
@@ -35,12 +37,17 @@ export function useCreateTag() {
                 body: JSON.stringify(body),
             });
             if (!res.ok) {
-                throw new Error("Failed to create tag");
+                await getAndThrowError(res, "Failed to create tag");
             }
             return res.json();
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["allUserTags"] });
         }
-    });
+    },
+        {
+            loading: "Creating tag...",
+            success: "Tag created successfully!",
+            error: (error) => `Failed to create tag: ${error instanceof Error ? error.message : "Unknown error"}`,
+        });
 }

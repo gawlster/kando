@@ -25,9 +25,9 @@ import { type ResponseType as GetTicketsResponse } from "../pages/api/getTickets
 import { Unpacked } from "@/utils/typeUtils";
 import { useEnter } from "@/hooks/useEnter";
 import { useMoveTicket, useUpdateTicket } from "@/data/tickets";
+import { useSwimlanes } from "@/data/swimlanes";
 
 const allUserTags = [] as { id: number, title: string, color: string }[]
-const availableSwimlanes = [] as { id: number, title: string }[];
 
 type TicketProps = {
     details: Unpacked<GetTicketsResponse>;
@@ -41,6 +41,7 @@ type TicketProps = {
 const Ticket = forwardRef<HTMLDivElement, TicketProps>(({ details, interactionEnabled = true, style, listeners = {}, attributes = {} }, ref) => {
     const { mutateAsync: doUpdateTicket, isPending: saveLoading } = useUpdateTicket(details.swimlaneId || 0);
     const { mutateAsync: doMoveTicket } = useMoveTicket(details.swimlaneId || 0);
+    const { data: swimlanes } = useSwimlanes();
     const timeoutRef = useRef<NodeJS.Timeout | null>(null)
     const didLongPress = useRef(false)
     const didCancelPress = useRef(false)
@@ -79,16 +80,20 @@ const Ticket = forwardRef<HTMLDivElement, TicketProps>(({ details, interactionEn
         onDetailsOpen()
     }, [onDetailsOpen, handleCancelPress])
     const onDetailsSave = useCallback(async () => {
-        await doUpdateTicket({
-            id: details.id,
-            created_at: details.created_at,
-            title: editableTitle,
-            description: editableDescription,
-            startDate: editableStartDate.toString(),
-            dueDate: editableDueDate.toString(),
-            swimlaneId: details.swimlaneId,
-            tagIds: Array.from(editableSelectedTagIds).map((tagId) => Number(tagId))
-        })
+        try {
+            await doUpdateTicket({
+                id: details.id,
+                created_at: details.created_at,
+                title: editableTitle,
+                description: editableDescription,
+                startDate: editableStartDate.toString(),
+                dueDate: editableDueDate.toString(),
+                swimlaneId: details.swimlaneId,
+                tagIds: Array.from(editableSelectedTagIds).map((tagId) => Number(tagId))
+            })
+        } catch (_) {
+            // do nothing, handled in the hook
+        }
         onDetailsClose();
     }, [
         details,
@@ -101,10 +106,14 @@ const Ticket = forwardRef<HTMLDivElement, TicketProps>(({ details, interactionEn
         onDetailsClose
     ])
     const onMoveAction = useCallback(async (action: Key) => {
-        await doMoveTicket({
-            id: details.id,
-            newSwimlaneId: Number(action)
-        })
+        try {
+            await doMoveTicket({
+                id: details.id,
+                newSwimlaneId: Number(action)
+            })
+        } catch (_) {
+            // do nothing, handled in the hook
+        }
         onMoveClose();
     }, [
         details.id,
@@ -145,7 +154,7 @@ const Ticket = forwardRef<HTMLDivElement, TicketProps>(({ details, interactionEn
                 {...(listeners as any)}
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 {...(attributes as any)}
-                className="w-64 bg-background/70 min-h-20"
+                className="w-64 bg-background/70 min-h-20 flex-shrink-0"
                 isPressable
                 isBlurred
                 style={{
@@ -212,7 +221,7 @@ const Ticket = forwardRef<HTMLDivElement, TicketProps>(({ details, interactionEn
                     <ModalHeader>Move Ticket</ModalHeader>
                     <ModalBody>
                         <Listbox onAction={onMoveAction}>
-                            {availableSwimlanes.map((swimlane) => {
+                            {swimlanes ? swimlanes.map((swimlane) => {
                                 if (swimlane.id === details.swimlaneId) {
                                     return null;
                                 }
@@ -221,7 +230,7 @@ const Ticket = forwardRef<HTMLDivElement, TicketProps>(({ details, interactionEn
                                         {swimlane.title}
                                     </ListboxItem>
                                 )
-                            })}
+                            }) : null}
                         </Listbox>
                     </ModalBody>
                     <ModalFooter>

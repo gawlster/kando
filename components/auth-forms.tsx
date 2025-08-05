@@ -40,11 +40,15 @@ function RegisterForm({ switchToLogin }: { switchToLogin: () => void }) {
     const [password, setPassword] = useState("")
     const [confirmPassword, setConfirmPassword] = useState("")
     const handleSubmitPress = useCallback(async () => {
-        await doRegister({
-            username,
-            password,
-            confirmPassword
-        })
+        try {
+            await doRegister({
+                username,
+                password,
+                confirmPassword
+            })
+        } catch (_) {
+            // do nothing, handled in the hook
+        }
     }, [
         username,
         password,
@@ -92,10 +96,14 @@ function LoginForm({ switchToRegister }: { switchToRegister: () => void }) {
     const [username, setUsername] = useState("")
     const [password, setPassword] = useState("")
     const handleSubmitPress = useCallback(async () => {
-        await doLogin({
-            username,
-            password
-        })
+        try {
+            await doLogin({
+                username,
+                password
+            })
+        } catch (_) {
+            // do nothing, handled in the hook
+        }
     }, [
         username,
         password,

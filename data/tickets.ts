@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
     type ResponseType as GetTicketsResponse,
     url as getTicketsUrl
@@ -19,6 +19,8 @@ import {
     type ResponseType as MoveTicketResponse,
     url as moveTicketUrl
 } from "../pages/api/moveTicket";
+import { useToastMutation } from "@/hooks/useToastMutation";
+import { getAndThrowError } from "@/utils/dataUtils";
 
 export function useTickets({
     swimlaneId,
@@ -43,7 +45,7 @@ export function useTickets({
 
 export function useAddTicket(swimlaneId: number) {
     const queryClient = useQueryClient();
-    return useMutation<
+    return useToastMutation<
         AddTicketResponse,
         Error,
         AddTicketBody
@@ -56,19 +58,24 @@ export function useAddTicket(swimlaneId: number) {
                 body: JSON.stringify(body),
             });
             if (!res.ok) {
-                throw new Error("Failed to add ticket");
+                await getAndThrowError(res, "Failed to add ticket");
             }
             return res.json();
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["tickets", swimlaneId] });
         }
-    });
+    },
+        {
+            loading: "Adding ticket...",
+            success: "Ticket added successfully!",
+            error: (error) => `Failed to add ticket: ${error instanceof Error ? error.message : "Unknown error"}`,
+        });
 }
 
 export function useUpdateTicket(swimlaneId: number) {
     const queryClient = useQueryClient();
-    return useMutation<
+    return useToastMutation<
         UpdateTicketResponse,
         Error,
         UpdateTicketBody
@@ -81,20 +88,25 @@ export function useUpdateTicket(swimlaneId: number) {
                 body: JSON.stringify(body),
             });
             if (!res.ok) {
-                throw new Error("Failed to update ticket");
+                await getAndThrowError(res, "Failed to update ticket");
             }
             return res.json();
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["tickets", swimlaneId] });
         }
-    });
+    },
+        {
+            loading: "Updating ticket...",
+            success: "Ticket updated successfully!",
+            error: (error) => `Failed to update ticket: ${error instanceof Error ? error.message : "Unknown error"}`,
+        });
 }
 
 export function useMoveTicket(swimlaneId: number) {
     const newSwimlaneId = useRef(-1);
     const queryClient = useQueryClient();
-    return useMutation<
+    return useToastMutation<
         MoveTicketResponse,
         Error,
         MoveTicketBody
@@ -108,12 +120,18 @@ export function useMoveTicket(swimlaneId: number) {
                 body: JSON.stringify(body),
             });
             if (!res.ok) {
-                throw new Error("Failed to move ticket");
+                await getAndThrowError(res, "Failed to move ticket");
             }
             return res.json();
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["tickets", swimlaneId, newSwimlaneId.current] });
+            queryClient.invalidateQueries({ queryKey: ["tickets", swimlaneId] });
+            queryClient.invalidateQueries({ queryKey: ["tickets", newSwimlaneId.current] });
         }
-    });
+    },
+        {
+            loading: "Moving ticket...",
+            success: "Ticket moved successfully!",
+            error: (error) => `Failed to move ticket: ${error instanceof Error ? error.message : "Unknown error"}`,
+        });
 }

@@ -5,7 +5,7 @@ import { NextApiRequest, NextApiResponse } from "next"
 
 export type BodyType = Omit<Database["public"]["Tables"]["tag"]["Row"], "created_at" | "id" | "userId" | "color">
 export type ResponseType = {}
-export const url = "/api/reateTag"
+export const url = "/api/createTag"
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ResponseType | { error: string }>) {
     if (req.method !== "POST") {

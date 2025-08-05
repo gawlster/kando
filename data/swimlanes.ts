@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
     type ResponseType as GetSwimlanesResponse,
     url as getSwimlanesUrl
@@ -23,14 +23,17 @@ import {
     type ResponseType as DeleteSwimlaneResponse,
     url as deleteSwimlaneUrl
 } from "../pages/api/deleteSwimlane";
-import { useRef } from "react";
+import { useToastMutation } from "@/hooks/useToastMutation";
+import { getAndThrowError } from "@/utils/dataUtils";
 
 export function useSwimlanes() {
     return useQuery<GetSwimlanesResponse, Error>({
         queryKey: ["swimlanes"],
         queryFn: async () => {
             const res = await fetch(getSwimlanesUrl);
-            if (!res.ok) throw new Error("Failed to fetch swimlanes");
+            if (!res.ok) {
+                await getAndThrowError(res, "Failed to get swimlanes")
+            }
             return res.json();
         }
     });
@@ -38,7 +41,7 @@ export function useSwimlanes() {
 
 export function useAddSwimlane() {
     const queryClient = useQueryClient();
-    return useMutation<
+    return useToastMutation<
         AddSwimlaneResponse,
         Error,
         AddSwmlaneBody
@@ -51,19 +54,24 @@ export function useAddSwimlane() {
                 body: JSON.stringify(newSwimlane),
             });
             if (!res.ok) {
-                throw new Error("Failed to add swimlane");
+                await getAndThrowError(res, "Failed to add swimlane");
             }
             return res.json();
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["swimlanes"] });
         }
-    });
+    },
+        {
+            loading: "Adding swimlane...",
+            success: "Swimlane added successfully!",
+            error: (error) => `Failed to add swimlane: ${error instanceof Error ? error.message : "Unknown error"}`,
+        });
 }
 
 export function useMoveSwimlane() {
     const queryClient = useQueryClient();
-    return useMutation<
+    return useToastMutation<
         MoveSwimlaneResponse,
         Error,
         MoveSwimlaneBody
@@ -76,19 +84,24 @@ export function useMoveSwimlane() {
                 body: JSON.stringify(body),
             });
             if (!res.ok) {
-                throw new Error("Failed to move swimlane");
+                await getAndThrowError(res, "Failed to move swimlane");
             }
             return res.json();
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["swimlanes"] });
         }
-    });
+    },
+        {
+            loading: "Moving swimlane...",
+            success: "Swimlane moved successfully!",
+            error: (error) => `Failed to move swimlane: ${error instanceof Error ? error.message : "Unknown error"}`,
+        });
 }
 
 export function useSortTickets(swimlaneId: number) {
     const queryClient = useQueryClient();
-    return useMutation<
+    return useToastMutation<
         SortTicketsResponse,
         Error,
         SortTicketsBody
@@ -101,19 +114,24 @@ export function useSortTickets(swimlaneId: number) {
                 body: JSON.stringify(body),
             });
             if (!res.ok) {
-                throw new Error("Failed to sort tickets");
+                await getAndThrowError(res, "Failed to sort tickets");
             }
             return res.json();
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["tickets", swimlaneId] });
         }
-    });
+    },
+        {
+            loading: "Sorting tickets...",
+            success: "Tickets sorted successfully!",
+            error: (error) => `Failed to sort tickets: ${error instanceof Error ? error.message : "Unknown error"}`,
+        });
 }
 
 export function useDeleteSwimlane() {
     const queryClient = useQueryClient();
-    return useMutation<
+    return useToastMutation<
         DeleteSwimlaneResponse,
         Error,
         DeleteSwimlaneBody
@@ -126,12 +144,17 @@ export function useDeleteSwimlane() {
                 body: JSON.stringify(body),
             });
             if (!res.ok) {
-                throw new Error("Failed to delete swimlane");
+                await getAndThrowError(res, "Failed to delete swimlane");
             }
             return res.json();
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["swimlanes"] });
         }
-    });
+    },
+        {
+            loading: "Deleting swimlane...",
+            success: "Swimlane deleted successfully!",
+            error: (error) => `Failed to delete swimlane: ${error instanceof Error ? error.message : "Unknown error"}`,
+        });
 }
