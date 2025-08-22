@@ -249,6 +249,10 @@ const Ticket = forwardRef<HTMLDivElement, TicketProps>(
                 setDueDate={setEditableDueDate}
                 selectedTagIds={editableSelectedTagIds}
                 setSelectedTagIds={setEditableSelectedTagIds}
+                currentSwimlane={details.swimlaneId}
+                setCurrentSwimlane={(newSwimlane: number) =>
+                  onMoveAction(newSwimlane)
+                }
               />
             </ModalBody>
             <ModalFooter>

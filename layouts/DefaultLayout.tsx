@@ -82,7 +82,9 @@ export default function DefaultLayout({
           </PopoverContent>
         </Popover>
       </div>
-      <main className="h-full p-4 w-full overflow-x-auto">{children}</main>
+      <main className="p-4 w-full overflow-x-auto overflow-y-hidden">
+        {children}
+      </main>
       {AddSwimlaneModal}
       {FilterTicketsModal}
     </div>

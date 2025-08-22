@@ -73,7 +73,7 @@ function Layout({ children }: { children?: React.ReactNode }) {
   return (
     <CompactModeProvider>
       <DefaultLayout>
-        <div className="flex gap-4 h-full w-fit">{children}</div>
+        <div className="flex gap-4 max-h-full w-fit">{children}</div>
       </DefaultLayout>
     </CompactModeProvider>
   );
