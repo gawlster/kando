@@ -1,6 +1,7 @@
 import { useSwimlanes } from "@/data/swimlanes";
 import { useAllUserTags } from "@/data/tags";
 import { useMoveTicket, useUpdateTicket } from "@/data/tickets";
+import { useCompactMode } from "@/hooks/useCompactModeTogglePressable";
 import { useEnter } from "@/hooks/useEnter";
 import { Unpacked } from "@/utils/typeUtils";
 import {
@@ -54,6 +55,7 @@ const Ticket = forwardRef<HTMLDivElement, TicketProps>(
     const { mutateAsync: doMoveTicket } = useMoveTicket(
       details.swimlaneId || 0
     );
+    const { compactMode } = useCompactMode();
     const { data: swimlanes } = useSwimlanes();
     const { data: allUserTags } = useAllUserTags();
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -187,7 +189,7 @@ const Ticket = forwardRef<HTMLDivElement, TicketProps>(
           {...(listeners as any)}
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           {...(attributes as any)}
-          className="w-64 bg-background/70 min-h-20 flex-shrink-0"
+          className={`w-64 bg-background/70 flex-shrink-0 ${compactMode ? "h-12 overflow-hidden" : "min-h-20"}`}
           isPressable
           isBlurred
           style={{
@@ -197,31 +199,39 @@ const Ticket = forwardRef<HTMLDivElement, TicketProps>(
           {...customHandlers}
         >
           <CardBody className="h-full justify-center w-full">
-            <span className="font-semibold">{details.title}</span>
-            <div className="text-sm text-gray-400">
-              {details.startDate} - {details.dueDate}
-            </div>
-            <div className="flex flex-wrap gap-1 w-full mt-2">
-              {allUserTags
-                ? allUserTags.map((tag) => (
-                    <Fragment key={tag.id}>
-                      {details.tagIds?.map((tagId) => {
-                        if (`${tag.id}` === tagId) {
-                          return (
-                            <Chip
-                              key={tagId}
-                              style={{ backgroundColor: tag.color }}
-                              radius="sm"
-                            >
-                              {tag.title}
-                            </Chip>
-                          );
-                        }
-                      })}
-                    </Fragment>
-                  ))
-                : null}
-            </div>
+            <span
+              className={`font-semibold w-full overflow-x-hidden ${compactMode ? "truncate" : "text-wrap"}`}
+            >
+              {details.title}
+            </span>
+            {!compactMode && (
+              <>
+                <div className="text-sm text-gray-400">
+                  {details.startDate} - {details.dueDate}
+                </div>
+                <div className="flex flex-wrap gap-1 w-full mt-2">
+                  {allUserTags
+                    ? allUserTags.map((tag) => (
+                        <Fragment key={tag.id}>
+                          {details.tagIds?.map((tagId) => {
+                            if (`${tag.id}` === tagId) {
+                              return (
+                                <Chip
+                                  key={tagId}
+                                  style={{ backgroundColor: tag.color }}
+                                  radius="sm"
+                                >
+                                  {tag.title}
+                                </Chip>
+                              );
+                            }
+                          })}
+                        </Fragment>
+                      ))
+                    : null}
+                </div>
+              </>
+            )}
           </CardBody>
         </Card>
         <Modal
