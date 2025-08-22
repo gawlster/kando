@@ -234,11 +234,7 @@ const Ticket = forwardRef<HTMLDivElement, TicketProps>(
             )}
           </CardBody>
         </Card>
-        <Modal
-          isOpen={isDetailsOpen}
-          onClose={onDetailsClose}
-          isDismissable={false}
-        >
+        <Modal isOpen={isDetailsOpen} onClose={onDetailsClose} isDismissable>
           <ModalContent>
             <ModalHeader>Ticket Details</ModalHeader>
             <ModalBody>
